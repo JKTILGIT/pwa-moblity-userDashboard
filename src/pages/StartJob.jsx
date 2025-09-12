@@ -30,6 +30,8 @@ export default function StartJob(){
   const [rateLoading, setRateLoading] = useState(false)
   const [rateError, setRateError] = useState("")
   const [rateCostData, setRateCostData] = useState(null) // { totalCost, breakdown: [{service, cost}] }
+  const [otpSendError, setOtpSendError] = useState("")
+  const [otpVerifyError, setOtpVerifyError] = useState("")
   
   // Update Zoho ticket (local backend) when proceeding to OTP
   const submitZohoTicketUpdate = async () => {
@@ -179,9 +181,10 @@ export default function StartJob(){
     try {
       const payload = preparePayloadWithArrays()
       const fd = buildFormDataFromArrays(payload)
-      const endpoint = `${API_BASE || ''}/api/jobs/complete`
+      
+      const endpoint = `${API_BASE || ''}/api/driver/verify-otp-mechanic?phone=${phone}&otp=${otp}`
       const res = await fetch(endpoint, {
-        method: 'POST',
+        method: 'GET',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}` },
         body: fd,
       })
@@ -319,6 +322,86 @@ export default function StartJob(){
       setRateError(err?.message || 'Failed to fetch service costs')
     } finally {
       setRateLoading(false)
+    }
+  }
+
+  // Send OTP to user's phone when moving to OTP screen
+  const sendOtpToPhone = async () => {
+    console.log("sendOtpToPhone invoked")
+    try {
+      setOtpSendError("")
+      // Prefer explicit 'mobile' key if present
+      let phone = (localStorage.getItem('mobile') || '').trim()
+
+      // Fallback to JSON-parsed 'user' object
+      if (!phone) {
+        const raw = localStorage.getItem('user')
+        if (raw) {
+          try {
+            const obj = JSON.parse(raw)
+            if (obj && obj.mobile) phone = String(obj.mobile).trim()
+          } catch (e) {
+            console.warn('Failed to parse localStorage.user:', e?.message)
+          }
+        }
+      }
+
+      // Fallback to ticket phone
+      if (!phone) phone = String(ticketData?.phone || '').trim()
+
+      if (!phone) {
+        setOtpSendError('Mobile number not found')
+        return false
+      }
+
+      const base = API_BASE || 'https://pwa-connect-api.jktyre.co.in'
+      const endpoint = `${base}/api/driver/send-otp-phone`
+      console.log('Sending OTP →', endpoint, { phone })
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      })
+      if (!res.ok) {
+        const text = await res.text()
+        setOtpSendError(text || 'Failed to send OTP')
+        console.warn('sendOtpToPhone failed:', res.status, text)
+        return false
+      }
+      console.log('sendOtpToPhone success')
+      return true
+    } catch (err) {
+      setOtpSendError(err?.message || 'Failed to send OTP')
+      console.error('sendOtpToPhone error:', err)
+      return false
+    }
+  }
+
+  // Verify OTP with phone and otp digits
+  const verifyOtpWithServer = async () => {
+    try {
+      setOtpVerifyError("")
+      // const phone = (localStorage.getItem('mobile') || '').trim() || (ticketData?.phone || '').trim()
+      const p = localStorage.getItem('user')
+      const phone = p?.mobile || ''
+      const otpCode = otp.join('').trim()
+      if (!phone || !otpCode) {
+        setOtpVerifyError('Enter OTP to continue')
+        return false
+      }
+      const base = 'https://pwa-connect-api.jktyre.co.in'
+      const url = `${base}/api/driver/verify-otp-mechanic?phone=${phone}&otp=${otpCode}`
+      const res = await fetch(url, { method: 'GET' })
+      if (!res.ok) {
+        const text = await res.text()
+        setOtpVerifyError(text || 'Invalid OTP')
+        return false
+      }
+      return true
+    } catch (err) {
+      setOtpVerifyError(err?.message || 'OTP verification failed')
+      return false
     }
   }
 
@@ -717,7 +800,7 @@ export default function StartJob(){
 
           {/* Continue Button */}
             <div className='btn-center' style={{marginTop:24}}>
-              <button className='btn' onClick={() => setShowCaptureModal(true)}>
+              <button className='btn' onClick={async () => { setShowCaptureModal(true) }}>
                 Step 3 : Capture Image
           </button>
             </div>
@@ -942,6 +1025,11 @@ export default function StartJob(){
           </div>
 
           {/* Continue Button */}
+          {otpSendError && (
+            <div className='text-field' style={{ color: 'red', marginBottom: 12 }}>
+              {otpSendError}
+            </div>
+          )}
           <div className='btn-center'>
             <button
               className='btn'
@@ -950,10 +1038,20 @@ export default function StartJob(){
                 if (!rateCostData) {
                   await fetchRateCardCosts()
                 }
+
+                // Attempt to send OTP before any further actions
+                const sent = await sendOtpToPhone()
+                if (!sent) {
+                  // Do not proceed if OTP could not be sent
+                  return
+                }
+
                 // Update Zoho ticket with array-of-strings photos
                 await submitZohoTicketUpdate()
+
                 // Save full payload pre-OTP (FormData route)
                 await submitJobPreOtp();
+
                 setCurrentScreen('otp-verification');
               }}
             >
@@ -1038,7 +1136,8 @@ export default function StartJob(){
               // 1) Mark Zoho ticket completed via local API
               await submitZohoVerifyCompleted()
               // 2) Final submit with arrays of File objects
-              await submitFinalAfterOtp()
+              // await submitFinalAfterOtp()
+              await verifyOtpWithServer()
               // 3) UI success & redirect to Home/Dashboard
               setShowSuccessModal(true)
               setTimeout(() => {
