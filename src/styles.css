@@ -36,7 +36,13 @@ body{
   font-family: var(--font-family);
   background:var(--bg);
   color:var(--text);
+  /* iOS Safari fixes for bottom nav */
+  -webkit-overflow-scrolling:touch;
+  /* Prevent iOS bounce effect */
+  overscroll-behavior:none;
+  -webkit-overscroll-behavior:none;
 }
+
 
 /* Typography Classes */
 .bold-text {
@@ -76,7 +82,10 @@ body{
 }
 
 /* Layout */
-.container{padding:16px}
+.container{
+  padding:16px;
+  padding-bottom:80px; /* Space for fixed bottom navigation */
+}
 .card{background:var(--card);border-radius:var(--radius);box-shadow:0 4px 16px rgba(0,0,0,.06)}
 
 /* Buttons */
@@ -191,7 +200,25 @@ small, .caption {
 .mobile-shell{min-height:100%;position:relative;width:100%;margin:0}
 
 /* Bottom Navigation */
-.bottom-nav{position:sticky;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:flex;justify-content:space-around;padding:6px 0}
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#fff;
+  border-top:1px solid #eee;
+  display:flex;
+  justify-content:space-around;
+  padding:6px 0;
+  z-index:1000;
+  /* iOS Safari fixes */
+  -webkit-transform:translateZ(0);
+  transform:translateZ(0);
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+  /* Prevent iOS bounce effect */
+  -webkit-overflow-scrolling:touch;
+}
 .nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-family: var(--font-family);font-weight: var(--caption-font-weight);font-size: var(--caption-font-size);line-height: var(--caption-line-height);letter-spacing: 0px;color:#6b7280;text-decoration:none;padding:6px 8px}
 .nav-item.active{color:#111827}
 .nav-item .icon{font-size:20px}
@@ -325,7 +352,10 @@ hr.sep{border:0;border-top:1px solid #eee;margin:8px 0}
 
 /* Mobile-specific adjustments */
 @media (max-width: 479px) {
-  .container { padding: 12px; }
+  .container { 
+    padding: 12px;
+    padding-bottom: 80px; /* Ensure space for bottom nav on mobile */
+  }
   .btn { max-width: 100%; }
   .login-continue-btn { max-width: 100%; }
   
@@ -335,6 +365,48 @@ hr.sep{border:0;border-top:1px solid #eee;margin:8px 0}
     --caption-font-size: 11px;
     --text-field-font-size: 11px;
     --button-font-size: 14px;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .bottom-nav {
+    /* Force hardware acceleration on iOS */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    /* Prevent iOS from moving the bottom nav */
+    position: fixed !important;
+    bottom: 0 !important;
+    /* Add safe area padding for iPhone X and newer */
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    /* Ensure it stays at bottom during scroll */
+    will-change: transform;
+  }
+  
+  /* Ensure content doesn't get hidden behind bottom nav */
+  .container {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Additional iOS fixes for bottom navigation */
+@media screen and (max-width: 768px) {
+  .bottom-nav {
+    /* Use transform instead of position for better iOS performance */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    /* Prevent iOS from hiding/showing the bottom nav */
+    -webkit-transition: none;
+    transition: none;
+  }
+  
+  /* Prevent the bottom nav from moving during scroll */
+  .bottom-nav {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
   }
 }
 
