@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import JobCard from '../components/JobCard'
 import RequestTilesInline from '../components/RequestTilesInline';
+import { useRequests } from '../store/RequestsProvider';
 
 export default function Home() {
   const [tickets, setTickets] = useState([]);
@@ -9,7 +10,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState('all'); // 'all', 'open', 'completed'
 
-
+  const { items, accept, reject, format } = useRequests();
 
   const [showRequests, setShowRequests] = useState(false);
 
@@ -100,7 +101,7 @@ export default function Home() {
       <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between' }}>
         <h3>Jobs</h3>
         <div style={{ padding: '5px 10px', borderRadius: "100px", backgroundColor: `${showRequests ? '#FB8C00' : '#000'}`, color: 'white' }}>
-          <p onClick={() => setShowRequests(v => !v)} style={{ margin: '0px', fontSize: '13px' }}>Requests</p>
+          <p onClick={() => setShowRequests(v => !v)} style={{ margin: '0px', fontSize: '13px' }}>Requests {items.length}</p>
         </div>
       </div>
 
