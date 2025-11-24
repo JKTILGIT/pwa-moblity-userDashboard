@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast'
 
 const API_BASE = (import.meta.env.VITE_API_BASE) || ''
 
-export default function StartJob(){
+export default function StartJob() {
   const { id } = useParams()
   const nav = useNavigate()
   const [currentScreen, setCurrentScreen] = useState('workflow') // workflow, bill-preview, otp-verification, confirmation
@@ -38,10 +38,10 @@ export default function StartJob(){
 
 
   const API_BASE = (import.meta.env.VITE_API_BASE) || ''
-  
+
   // Update Zoho ticket (local backend) when proceeding to OTP
   const submitZohoTicketUpdate = async () => {
-    
+
     try {
       // Build arrays of strings (filenames or empty)
       const prePhotos = [
@@ -56,17 +56,20 @@ export default function StartJob(){
       ].filter((v, idx, arr) => v || idx === 0) // keep at least one entry
 
       const payload = {
-        preRepairPhotos: prePhotos,
-        workDetails: {
-          tyreType: selectedTyreType,
-          services: selectedServices,
-          patchType: selectedPatchType,
-          patchNumber: patchNumber,
-          tyreFittingOption: selectedServices.includes('Tyre Fitting') ? tyreFittingOption : null,
-          wheelAssemblyOption: selectedServices.includes('Wheel Assembly') ? wheelAssemblyOption : null,
-          otherServices: selectedServices.includes('Other Services') ? (otherServicesText || null) : null
-        },
-        postRepairPhotos: postPhotos
+        data: {
+          preRepairPhotos: prePhotos,
+          workDetails: {
+            tyreType: selectedTyreType,
+            services: selectedServices,
+            patchType: selectedPatchType,
+            patchNumber: patchNumber,
+            tyreFittingOption: selectedServices.includes('Tyre Fitting') ? tyreFittingOption : null,
+            wheelAssemblyOption: selectedServices.includes('Wheel Assembly') ? wheelAssemblyOption : null,
+            otherServices: selectedServices.includes('Other Services') ? (otherServicesText || null) : null
+          },
+          postRepairPhotos: postPhotos
+        }
+
       }
 
       const zohoId = ticketData?.zohoTicketId || ''
@@ -75,7 +78,7 @@ export default function StartJob(){
         return
       }
 
-      const endpoint = `${API_BASE}/api/zoho/tickets/update/${zohoId}`
+      const endpoint = `${API_BASE}/api/zoho/tickets/${zohoId}`
       console.log('Calling Zoho Update →', endpoint, payload)
       await fetch(endpoint, {
         method: 'PATCH',
@@ -188,7 +191,7 @@ export default function StartJob(){
     try {
       const payload = preparePayloadWithArrays()
       const fd = buildFormDataFromArrays(payload)
-      
+
       const endpoint = `${API_BASE || ''}/api/driver/verify-otp-mechanic?phone=${phone}&otp=${otp}`
       const res = await fetch(endpoint, {
         method: 'GET',
@@ -245,8 +248,8 @@ export default function StartJob(){
   }
 
   const handleServiceToggle = (service) => {
-    setSelectedServices(prev => 
-      prev.includes(service) 
+    setSelectedServices(prev =>
+      prev.includes(service)
         ? prev.filter(s => s !== service)
         : [...prev, service]
     )
@@ -257,7 +260,7 @@ export default function StartJob(){
       const newOtp = [...otp]
       newOtp[index] = value
       setOtp(newOtp)
-      
+
       // Auto-focus next input
       if (value && index < 3) {
         const nextInput = document.getElementById(`otp-${index + 1}`)
@@ -401,12 +404,12 @@ export default function StartJob(){
         setOtpVerifyError('Enter OTP to continue')
         return false
       }
-    
+
       const base = `${API_BASE}`
       const url = `${base}/api/driver/verify-otp-mechanic?phoneNo=${phone}&otp=${otpCode}`
       const res = await fetch(url, { method: 'GET' })
       console.log('OTP verification response status:', res.status)
-      
+
       if (!res.ok) {
         const text = await res.text()
         console.log('OTP verification error response:', text)
@@ -417,7 +420,7 @@ export default function StartJob(){
       // Parse the response body to check if OTP is valid
       const responseData = await res.json()
       console.log('OTP verification response data:', responseData)
-      
+
       if (!responseData.valid) {
         setOtpVerifyError('Invalid OTP. Please check and try again.')
         return false
@@ -512,14 +515,14 @@ export default function StartJob(){
     const fetchTicketData = async () => {
       try {
         setLoading(true)
-        
+
         // Get user ID from localStorage
         const stored = localStorage.getItem("user")
         let userId = ""
         try {
           userId = stored ? JSON.parse(stored).id : ""
-        } catch {}
-        
+        } catch { }
+
         if (!userId) {
           setError("No user ID found in local storage")
           setLoading(false)
@@ -528,27 +531,27 @@ export default function StartJob(){
 
         // Call the API to get all tickets
         const response = await fetch(`${API_BASE}/api/zoho/tickets/mechanic/${userId}`)
-        
+
         if (!response.ok) {
           const text = await response.text()
           throw new Error(text || `HTTP ${response.status}`)
         }
-        
+
         const data = await response.json()
         console.log('API Response for StartJob:', data)
-        
+
         // Find the specific ticket by ID
         const ticket = data.tickets.find(t => t._id === id)
-        
+
         if (!ticket) {
           setError("Ticket not found")
           setLoading(false)
           return
         }
-        
+
         setTicketData(ticket)
         console.log('Found ticket:', ticket)
-        
+
       } catch (err) {
         console.error('Error fetching ticket data:', err)
         setError(err.message || "Failed to fetch ticket data")
@@ -600,7 +603,7 @@ export default function StartJob(){
   if (loading) {
     return (
       <div className='container'>
-        <div className='card' style={{padding: 20, textAlign: 'center'}}>
+        <div className='card' style={{ padding: 20, textAlign: 'center' }}>
           <div className='caption-text'>Loading ticket data...</div>
         </div>
       </div>
@@ -611,9 +614,9 @@ export default function StartJob(){
   if (error) {
     return (
       <div className='container'>
-        <div className='card' style={{padding: 20, textAlign: 'center'}}>
-          <div style={{color: 'red'}} className='text-field'>{error}</div>
-          <button className='btn' style={{marginTop: 16}} onClick={() => nav('/jobs')}>
+        <div className='card' style={{ padding: 20, textAlign: 'center' }}>
+          <div style={{ color: 'red' }} className='text-field'>{error}</div>
+          <button className='btn' style={{ marginTop: 16 }} onClick={() => nav('/jobs')}>
             Back to Jobs
           </button>
         </div>
@@ -623,32 +626,32 @@ export default function StartJob(){
 
   // Main workflow screen
   if (currentScreen === 'workflow') {
-  return (
-    <div className='container'>
-      <div className='card' style={{padding:20}}>
-        {/* Header */}
-        <div className='row' style={{alignItems:'center', marginBottom:20}}>
-            <button onClick={() => nav('/jobs')} className='btn' style={{background:'#f3f4f6', color:'#111', padding:'8px 12px', width: 'auto', maxWidth: 'none', height: 'auto'}}>←</button>
-          <div style={{marginLeft:12}}>
-              <h3 className='bold-text' style={{margin:0, color:'var(--brand)', fontSize: '18px'}}>
+    return (
+      <div className='container'>
+        <div className='card' style={{ padding: 20 }}>
+          {/* Header */}
+          <div className='row' style={{ alignItems: 'center', marginBottom: 20 }}>
+            <button onClick={() => nav('/jobs')} className='btn' style={{ background: '#f3f4f6', color: '#111', padding: '8px 12px', width: 'auto', maxWidth: 'none', height: 'auto' }}>←</button>
+            <div style={{ marginLeft: 12 }}>
+              <h3 className='bold-text' style={{ margin: 0, color: 'var(--brand)', fontSize: '18px' }}>
                 {ticketData ? ticketData.zohoTicketId : 'DL3C132739'}
               </h3>
               <small className='caption-text'>
                 {ticketData ? ticketData.subject : 'Tyre Location'}
               </small>
             </div>
-        </div>
-
-        {/* Step 1: Upload Pre-Repair Photo */}
-        <div className='step-section'>
-          <div className='row' style={{alignItems:'center', marginBottom:16}}>
-              <span className='step-number caption-text'>Step 1:</span>
-              <span className='step-title bold-text' style={{fontSize: '16px'}}>Upload Pre-Repair Photo</span>
-            <div className='step-complete'>✓</div>
           </div>
-          
-          <div className='stack' style={{gap:16, marginBottom:24}}>
-              <div 
+
+          {/* Step 1: Upload Pre-Repair Photo */}
+          <div className='step-section'>
+            <div className='row' style={{ alignItems: 'center', marginBottom: 16 }}>
+              <span className='step-number caption-text'>Step 1:</span>
+              <span className='step-title bold-text' style={{ fontSize: '16px' }}>Upload Pre-Repair Photo</span>
+              <div className='step-complete'>✓</div>
+            </div>
+
+            <div className='stack' style={{ gap: 16, marginBottom: 24 }}>
+              <div
                 className={`file-upload-area ${uploadedFiles.pre_0 ? 'has-file' : ''}`}
                 onClick={() => handleFileUpload('pre', 0)}
               >
@@ -656,230 +659,230 @@ export default function StartJob(){
                 <div className='file-upload-text'>Tap to upload</div>
                 <div className='file-upload-subtext'>Camera or Gallery</div>
               </div>
-              <div 
+              <div
                 className={`file-upload-area ${uploadedFiles.pre_1 ? 'has-file' : ''}`}
                 onClick={() => handleFileUpload('pre', 1)}
               >
                 <img src='/Group.png' alt='upload' className='file-upload-icon' />
                 <div className='file-upload-text'>Tap to upload</div>
                 <div className='file-upload-subtext'>Camera or Gallery</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Step 2: Work & Charges */}
-        <div className='step-section'>
-          <div className='row' style={{alignItems:'center', marginBottom:16}}>
+          {/* Step 2: Work & Charges */}
+          <div className='step-section'>
+            <div className='row' style={{ alignItems: 'center', marginBottom: 16 }}>
               <span className='step-number caption-text'>Step 2:</span>
-              <span className='step-title bold-text' style={{fontSize: '16px'}}>Work & Charges</span>
-          </div>
-            <p className='caption-text' style={{marginBottom:24}}>Kindly Select Services Being done</p>
-
-          {/* Select Tyre Type */}
-            <div className='form-section'>
-            <h4>Select Tyre Type</h4>
-            <div className='segmented-control'>
-              <button 
-                className={`segmented-btn ${selectedTyreType === 'tubeless' ? 'active' : ''}`}
-                onClick={() => setSelectedTyreType('tubeless')}
-              >
-                Tubeless
-              </button>
-              <button 
-                className={`segmented-btn ${selectedTyreType === 'tube' ? 'active' : ''}`}
-                onClick={() => setSelectedTyreType('tube')}
-              >
-                Tube Tyre
-              </button>
+              <span className='step-title bold-text' style={{ fontSize: '16px' }}>Work & Charges</span>
             </div>
-          </div>
+            <p className='caption-text' style={{ marginBottom: 24 }}>Kindly Select Services Being done</p>
 
-          {/* Select Services */}
+            {/* Select Tyre Type */}
             <div className='form-section'>
-            <h4>Select Services</h4>
-            <div className='checkbox-list'>
-              {services.map(service => (
-                <label key={service} className='checkbox-item'>
-                  <input 
-                    type='checkbox' 
-                    checked={selectedServices.includes(service)}
-                    onChange={() => handleServiceToggle(service)}
-                  />
-                  <span>{service}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Conditional Sub-options */}
-          {selectedServices.includes('Tyre Fitting') && (
-              <div className='form-section'>
-              <h4>Tyre Fitting</h4>
-              <div className='radio-group'>
-                <label className='radio-item'>
-                  <input 
-                    type='radio' 
-                    name='tyreFitting' 
-                    value='mount'
-                    checked={tyreFittingOption === 'mount'}
-                    onChange={(e) => setTyreFittingOption(e.target.value)}
-                  />
-                  <span>Mount</span>
-                </label>
-                <label className='radio-item'>
-                  <input 
-                    type='radio' 
-                    name='tyreFitting' 
-                    value='demount'
-                    checked={tyreFittingOption === 'demount'}
-                    onChange={(e) => setTyreFittingOption(e.target.value)}
-                  />
-                  <span>Demount</span>
-                </label>
+              <h4>Select Tyre Type</h4>
+              <div className='segmented-control'>
+                <button
+                  className={`segmented-btn ${selectedTyreType === 'tubeless' ? 'active' : ''}`}
+                  onClick={() => setSelectedTyreType('tubeless')}
+                >
+                  Tubeless
+                </button>
+                <button
+                  className={`segmented-btn ${selectedTyreType === 'tube' ? 'active' : ''}`}
+                  onClick={() => setSelectedTyreType('tube')}
+                >
+                  Tube Tyre
+                </button>
               </div>
             </div>
-          )}
 
-          {selectedServices.includes('Wheel Assembly') && (
-              <div className='form-section'>
-              <h4>Wheel Assembly</h4>
-              <div className='radio-group'>
-                <label className='radio-item'>
-                  <input 
-                    type='radio' 
-                    name='wheelAssembly' 
-                    value='jack'
-                    checked={wheelAssemblyOption === 'jack'}
-                    onChange={(e) => setWheelAssemblyOption(e.target.value)}
-                  />
-                  <span>Jack + Wheel Nuts</span>
-                </label>
+            {/* Select Services */}
+            <div className='form-section'>
+              <h4>Select Services</h4>
+              <div className='checkbox-list'>
+                {services.map(service => (
+                  <label key={service} className='checkbox-item'>
+                    <input
+                      type='checkbox'
+                      checked={selectedServices.includes(service)}
+                      onChange={() => handleServiceToggle(service)}
+                    />
+                    <span>{service}</span>
+                  </label>
+                ))}
               </div>
             </div>
-          )}
 
-          {selectedServices.includes('Other Services') && (
+            {/* Conditional Sub-options */}
+            {selectedServices.includes('Tyre Fitting') && (
               <div className='form-section'>
-              <h4>Other Services</h4>
-              <input 
-                type='text' 
-                className='input' 
-                placeholder='Type Here' 
-                value={otherServicesText}
-                onChange={(e) => setOtherServicesText(e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* Select Patch Type */}
-            <div className='form-section'>
-            <h4>Select Patch Type</h4>
-            <div className='segmented-control'>
-              <button 
-                className={`segmented-btn ${selectedPatchType === 'nylon' ? 'active' : ''}`}
-                onClick={() => setSelectedPatchType('nylon')}
-              >
-                Nylon Patch
-              </button>
-              <button 
-                className={`segmented-btn ${selectedPatchType === 'radial' ? 'active' : ''}`}
-                onClick={() => setSelectedPatchType('radial')}
-              >
-                Radial Patch
-              </button>
-            </div>
-          </div>
-
-          {/* Patch Number - Different options based on patch type */}
-            <div className='form-section'>
-            <h4>Patch no.:</h4>
-            <div className='radio-group'>
-              {selectedPatchType === 'nylon' ? (
-                ['3', '4', '5', '6', '7', '8'].map(num => (
-                  <label key={num} className='radio-item'>
-                    <input 
-                      type='radio' 
-                      name='patchNumber' 
-                      value={num}
-                      checked={patchNumber === num}
-                      onChange={(e) => setPatchNumber(e.target.value)}
+                <h4>Tyre Fitting</h4>
+                <div className='radio-group'>
+                  <label className='radio-item'>
+                    <input
+                      type='radio'
+                      name='tyreFitting'
+                      value='mount'
+                      checked={tyreFittingOption === 'mount'}
+                      onChange={(e) => setTyreFittingOption(e.target.value)}
                     />
-                    <span>{num}</span>
+                    <span>Mount</span>
                   </label>
-                ))
-              ) : (
-                ['20', '24', '30', '33', '35', '37', '40', '42'].map(num => (
-                  <label key={num} className='radio-item'>
-                    <input 
-                      type='radio' 
-                      name='patchNumber' 
-                      value={num}
-                      checked={patchNumber === num}
-                      onChange={(e) => setPatchNumber(e.target.value)}
+                  <label className='radio-item'>
+                    <input
+                      type='radio'
+                      name='tyreFitting'
+                      value='demount'
+                      checked={tyreFittingOption === 'demount'}
+                      onChange={(e) => setTyreFittingOption(e.target.value)}
                     />
-                    <span>{num}</span>
+                    <span>Demount</span>
                   </label>
-                ))
-              )}
-            </div>
-          </div>
+                </div>
+              </div>
+            )}
 
-          {/* Continue Button */}
-            <div className='btn-center' style={{marginTop:24}}>
+            {selectedServices.includes('Wheel Assembly') && (
+              <div className='form-section'>
+                <h4>Wheel Assembly</h4>
+                <div className='radio-group'>
+                  <label className='radio-item'>
+                    <input
+                      type='radio'
+                      name='wheelAssembly'
+                      value='jack'
+                      checked={wheelAssemblyOption === 'jack'}
+                      onChange={(e) => setWheelAssemblyOption(e.target.value)}
+                    />
+                    <span>Jack + Wheel Nuts</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {selectedServices.includes('Other Services') && (
+              <div className='form-section'>
+                <h4>Other Services</h4>
+                <input
+                  type='text'
+                  className='input'
+                  placeholder='Type Here'
+                  value={otherServicesText}
+                  onChange={(e) => setOtherServicesText(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Select Patch Type */}
+            <div className='form-section'>
+              <h4>Select Patch Type</h4>
+              <div className='segmented-control'>
+                <button
+                  className={`segmented-btn ${selectedPatchType === 'nylon' ? 'active' : ''}`}
+                  onClick={() => setSelectedPatchType('nylon')}
+                >
+                  Nylon Patch
+                </button>
+                <button
+                  className={`segmented-btn ${selectedPatchType === 'radial' ? 'active' : ''}`}
+                  onClick={() => setSelectedPatchType('radial')}
+                >
+                  Radial Patch
+                </button>
+              </div>
+            </div>
+
+            {/* Patch Number - Different options based on patch type */}
+            <div className='form-section'>
+              <h4>Patch no.:</h4>
+              <div className='radio-group'>
+                {selectedPatchType === 'nylon' ? (
+                  ['3', '4', '5', '6', '7', '8'].map(num => (
+                    <label key={num} className='radio-item'>
+                      <input
+                        type='radio'
+                        name='patchNumber'
+                        value={num}
+                        checked={patchNumber === num}
+                        onChange={(e) => setPatchNumber(e.target.value)}
+                      />
+                      <span>{num}</span>
+                    </label>
+                  ))
+                ) : (
+                  ['20', '24', '30', '33', '35', '37', '40', '42'].map(num => (
+                    <label key={num} className='radio-item'>
+                      <input
+                        type='radio'
+                        name='patchNumber'
+                        value={num}
+                        checked={patchNumber === num}
+                        onChange={(e) => setPatchNumber(e.target.value)}
+                      />
+                      <span>{num}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Continue Button */}
+            <div className='btn-center' style={{ marginTop: 24 }}>
               <button className='btn' onClick={async () => { setShowCaptureModal(true) }}>
                 Step 3 : Capture Image
-          </button>
-            </div>
-        </div>
-      </div>
-
-      {/* Upload Photo Modal */}
-      {showModal && (
-        <div className='modal-backdrop' onClick={() => setShowModal(false)}>
-          <div className='modal' onClick={e => e.stopPropagation()}>
-            <div className='modal-header'>
-                <h3 className='bold-text' style={{fontSize: '18px'}}>Upload Photo</h3>
-              <button onClick={() => setShowModal(false)}>✕</button>
-            </div>
-            <div className='photo-preview'>
-              <div>
-                  <div className='caption-text'>Photo preview</div>
-              </div>
-            </div>
-            <div className='modal-buttons'>
-              <button className='modal-btn modal-btn-outline'>Retake</button>
-              <button className='modal-btn-camera'>
-                <img src='/Group.png' alt='camera' style={{width:24, height:24}} />
               </button>
-              <button className='modal-btn modal-btn-solid'>Submit</button>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Capture Post Repair Photo Modal */}
-      {showCaptureModal && (
-        <div className='modal-backdrop' onClick={() => setShowCaptureModal(false)}>
-          <div className='modal' onClick={e => e.stopPropagation()}>
-            <div className='modal-header'>
-                <h3 className='bold-text' style={{fontSize: '18px'}}>Capture Post Repair Photo</h3>
-              <button onClick={() => setShowCaptureModal(false)}>✕</button>
+        {/* Upload Photo Modal */}
+        {showModal && (
+          <div className='modal-backdrop' onClick={() => setShowModal(false)}>
+            <div className='modal' onClick={e => e.stopPropagation()}>
+              <div className='modal-header'>
+                <h3 className='bold-text' style={{ fontSize: '18px' }}>Upload Photo</h3>
+                <button onClick={() => setShowModal(false)}>✕</button>
+              </div>
+              <div className='photo-preview'>
+                <div>
+                  <div className='caption-text'>Photo preview</div>
+                </div>
+              </div>
+              <div className='modal-buttons'>
+                <button className='modal-btn modal-btn-outline'>Retake</button>
+                <button className='modal-btn-camera'>
+                  <img src='/Group.png' alt='camera' style={{ width: 24, height: 24 }} />
+                </button>
+                <button className='modal-btn modal-btn-solid'>Submit</button>
+              </div>
             </div>
-            <div className='photo-preview'>
-                <div 
+          </div>
+        )}
+
+        {/* Capture Post Repair Photo Modal */}
+        {showCaptureModal && (
+          <div className='modal-backdrop' onClick={() => setShowCaptureModal(false)}>
+            <div className='modal' onClick={e => e.stopPropagation()}>
+              <div className='modal-header'>
+                <h3 className='bold-text' style={{ fontSize: '18px' }}>Capture Post Repair Photo</h3>
+                <button onClick={() => setShowCaptureModal(false)}>✕</button>
+              </div>
+              <div className='photo-preview'>
+                <div
                   className={`file-upload-area ${uploadedFiles.capture_0 ? 'has-file' : ''}`}
                   onClick={() => handleFileUpload('capture', 0)}
-                  style={{height: 200, cursor: 'pointer'}}
+                  style={{ height: 200, cursor: 'pointer' }}
                 >
                   {uploadedFiles.capture_0 ? (
-                    <div style={{textAlign: 'center', color: '#10b981'}}>
-                      <div style={{fontSize: '48px', marginBottom: '12px'}}>✓</div>
+                    <div style={{ textAlign: 'center', color: '#10b981' }}>
+                      <div style={{ fontSize: '48px', marginBottom: '12px' }}>✓</div>
                       <div className='file-upload-text'>Image Selected</div>
                       <div className='file-upload-subtext'>Click to change</div>
                     </div>
                   ) : (
-                    <div style={{textAlign: 'center'}}>
-                      <img src='/Group.png' alt='upload' style={{width:48, height:48, marginBottom:12, opacity: 0.7}} />
+                    <div style={{ textAlign: 'center' }}>
+                      <img src='/Group.png' alt='upload' style={{ width: 48, height: 48, marginBottom: 12, opacity: 0.7 }} />
                       <div className='file-upload-text'>Post repair photo preview</div>
                       <div className='file-upload-subtext'>Tap to select from Camera or Gallery</div>
                     </div>
@@ -889,10 +892,10 @@ export default function StartJob(){
               <div className='modal-buttons'>
                 <button className='modal-btn modal-btn-outline' onClick={() => handleFileUpload('capture', 0)}>Retake</button>
                 <button className='modal-btn-camera' onClick={() => handleFileUpload('capture', 0)}>
-                  <img src='/Group.png' alt='camera' style={{width:24, height:24}} />
+                  <img src='/Group.png' alt='camera' style={{ width: 24, height: 24 }} />
                 </button>
-                <button 
-                  className='modal-btn modal-btn-solid' 
+                <button
+                  className='modal-btn modal-btn-solid'
                   onClick={() => {
                     console.log('Submit clicked, uploaded files:', uploadedFiles)
                     console.log('capture_0 file:', uploadedFiles.capture_0)
@@ -900,7 +903,7 @@ export default function StartJob(){
                     setShowPostRepairModal(true)
                   }}
                   disabled={!uploadedFiles.capture_0}
-                  style={{opacity: uploadedFiles.capture_0 ? 1 : 0.5}}
+                  style={{ opacity: uploadedFiles.capture_0 ? 1 : 0.5 }}
                 >
                   Submit {uploadedFiles.capture_0 ? '✓' : '✗'}
                 </button>
@@ -914,32 +917,32 @@ export default function StartJob(){
           <div className='modal-backdrop' onClick={() => setShowPostRepairModal(false)}>
             <div className='modal' onClick={e => e.stopPropagation()}>
               <div className='modal-header'>
-                <h3 className='bold-text' style={{fontSize: '18px'}}>Upload Post Repair Images</h3>
+                <h3 className='bold-text' style={{ fontSize: '18px' }}>Upload Post Repair Images</h3>
                 <button onClick={() => setShowPostRepairModal(false)}>✕</button>
               </div>
               <div className='photo-preview'>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', height: 'auto', padding: '20px'}}>
-                  <div 
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', height: 'auto', padding: '20px' }}>
+                  <div
                     className={`file-upload-area ${uploadedFiles.post_0 ? 'has-file' : ''}`}
                     onClick={() => handleFileUpload('post', 0)}
-                    style={{height: 120, minHeight: 120}}
+                    style={{ height: 120, minHeight: 120 }}
                   >
-                    <img src='/Group.png' alt='upload' style={{width:32, height:32, marginBottom:8}} />
+                    <img src='/Group.png' alt='upload' style={{ width: 32, height: 32, marginBottom: 8 }} />
                     <div className='file-upload-text'>Upload Image 1</div>
                     <div className='file-upload-subtext'>Camera or Gallery</div>
                   </div>
-                  <div 
+                  <div
                     className={`file-upload-area ${uploadedFiles.post_1 ? 'has-file' : ''}`}
                     onClick={() => handleFileUpload('post', 1)}
-                    style={{height: 120, minHeight: 120}}
+                    style={{ height: 120, minHeight: 120 }}
                   >
-                    <img src='/Group.png' alt='upload' style={{width:32, height:32, marginBottom:8}} />
+                    <img src='/Group.png' alt='upload' style={{ width: 32, height: 32, marginBottom: 8 }} />
                     <div className='file-upload-text'>Upload Image 2</div>
                     <div className='file-upload-subtext'>Camera or Gallery</div>
                   </div>
+                </div>
               </div>
-            </div>
-            <div className='modal-buttons'>
+              <div className='modal-buttons'>
                 <button className='modal-btn modal-btn-outline' onClick={() => setShowPostRepairModal(false)}>Cancel</button>
                 <button
                   className='modal-btn modal-btn-solid'
@@ -971,29 +974,29 @@ export default function StartJob(){
   if (currentScreen === 'bill-preview') {
     return (
       <div className='container'>
-        <div className='card' style={{padding:20}}>
+        <div className='card' style={{ padding: 20 }}>
           {/* Header */}
-          <div className='row' style={{alignItems:'center', marginBottom:20}}>
-            <button onClick={() => setCurrentScreen('workflow')} className='btn' style={{background:'#f3f4f6', color:'#111', padding:'8px 12px', width: 'auto', maxWidth: 'none', height: 'auto'}}>←</button>
-            <h3 className='bold-text' style={{margin:0, fontSize: '18px'}}>Bill Preview</h3>
+          <div className='row' style={{ alignItems: 'center', marginBottom: 20 }}>
+            <button onClick={() => setCurrentScreen('workflow')} className='btn' style={{ background: '#f3f4f6', color: '#111', padding: '8px 12px', width: 'auto', maxWidth: 'none', height: 'auto' }}>←</button>
+            <h3 className='bold-text' style={{ margin: 0, fontSize: '18px' }}>Bill Preview</h3>
           </div>
 
           {/* Repair Summary */}
-          <div style={{marginBottom: 24}}>
-            <h3 className='bold-text' style={{fontSize: '20px', marginBottom: 16}}>Repair Summary</h3>
-            
-            <div style={{background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e5e7eb'}}>
-              <div className='row' style={{alignItems: 'center', marginBottom: 12}}>
-                <span className='bold-text' style={{color: 'var(--brand)', fontSize: '16px'}}>{repairData.shopName}</span>
-                <span className='text-field' style={{marginLeft: 8}}>{repairData.vehicleNumber}</span>
+          <div style={{ marginBottom: 24 }}>
+            <h3 className='bold-text' style={{ fontSize: '20px', marginBottom: 16 }}>Repair Summary</h3>
+
+            <div style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e5e7eb' }}>
+              <div className='row' style={{ alignItems: 'center', marginBottom: 12 }}>
+                <span className='bold-text' style={{ color: 'var(--brand)', fontSize: '16px' }}>{repairData.shopName}</span>
+                <span className='text-field' style={{ marginLeft: 8 }}>{repairData.vehicleNumber}</span>
               </div>
-              
-              <div className='stack' style={{gap: 8}}>
-                <div className='row' style={{justifyContent: 'space-between'}}>
+
+              <div className='stack' style={{ gap: 8 }}>
+                <div className='row' style={{ justifyContent: 'space-between' }}>
                   <span className='text-field'>Date of Breakdown:</span>
                   <span className='text-field'>{repairData.date}</span>
                 </div>
-                <div className='row' style={{justifyContent: 'space-between'}}>
+                <div className='row' style={{ justifyContent: 'space-between' }}>
                   <span className='text-field'>Customer Mob no:</span>
                   <span className='text-field'>{repairData.customerMobile}</span>
                 </div>
@@ -1005,7 +1008,7 @@ export default function StartJob(){
                   <span className='text-field'>Stencil No:</span>
                   <span className='text-field'>{repairData.stencilNo}</span>
                 </div> */}
-                <div className='row' style={{justifyContent: 'space-between'}}>
+                <div className='row' style={{ justifyContent: 'space-between' }}>
                   <span className='text-field'>Tyre Type:</span>
                   <span className='text-field'>{repairData.tyreType}</span>
                 </div>
@@ -1014,34 +1017,34 @@ export default function StartJob(){
           </div>
 
           {/* Performed Services */}
-          <div style={{marginBottom: 24}}>
-            <div className='row' style={{alignItems: 'center', marginBottom: 16}}>
-              <h3 className='bold-text' style={{fontSize: '20px', margin: 0}}>Performed Services</h3>
-              <button style={{background: 'none', border: 'none', color: 'var(--brand)', cursor: 'pointer', marginLeft: 8}}>
-                <span style={{fontSize: '16px'}}>✏️</span>
+          <div style={{ marginBottom: 24 }}>
+            <div className='row' style={{ alignItems: 'center', marginBottom: 16 }}>
+              <h3 className='bold-text' style={{ fontSize: '20px', margin: 0 }}>Performed Services</h3>
+              <button style={{ background: 'none', border: 'none', color: 'var(--brand)', cursor: 'pointer', marginLeft: 8 }}>
+                <span style={{ fontSize: '16px' }}>✏️</span>
               </button>
             </div>
-            
-            <div style={{background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e5e7eb'}}>
+
+            <div style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e5e7eb' }}>
               {/* Loading/Error for rate card */}
               {rateLoading && (
                 <div className='caption-text'>Calculating service costs...</div>
               )}
               {rateError && (
-                <div className='text-field' style={{color:'red'}}>{rateError}</div>
+                <div className='text-field' style={{ color: 'red' }}>{rateError}</div>
               )}
               {!rateLoading && !rateError && (
-                <div className='stack' style={{gap: 12}}>
+                <div className='stack' style={{ gap: 12 }}>
                   {(rateCostData?.breakdown?.length ? rateCostData.breakdown : repairData.services).map((item, index) => (
-                    <div key={index} className='row' style={{justifyContent: 'space-between'}}>
+                    <div key={index} className='row' style={{ justifyContent: 'space-between' }}>
                       <span className='text-field'>{item.service || item.name}</span>
                       <span className='text-field'>₹ {item.cost}</span>
                     </div>
                   ))}
-                  <hr style={{border: 'none', borderTop: '1px solid #e5e7eb', margin: '8px 0'}} />
-                  <div className='row' style={{justifyContent: 'space-between'}}>
-                    <span className='bold-text' style={{color: 'var(--brand)', fontSize: '16px'}}>Total Repair Cost:</span>
-                    <span className='bold-text' style={{color: 'var(--brand)', fontSize: '16px'}}>
+                  <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '8px 0' }} />
+                  <div className='row' style={{ justifyContent: 'space-between' }}>
+                    <span className='bold-text' style={{ color: 'var(--brand)', fontSize: '16px' }}>Total Repair Cost:</span>
+                    <span className='bold-text' style={{ color: 'var(--brand)', fontSize: '16px' }}>
                       ₹ {rateCostData?.totalCost ?? repairData.totalCost}
                     </span>
                   </div>
@@ -1063,7 +1066,7 @@ export default function StartJob(){
                 try {
                   setOtpSendLoading(true)
                   setOtpSendError("")
-                  
+
                   // Ensure cost data fetched
                   if (!rateCostData) {
                     await fetchRateCardCosts()
@@ -1105,25 +1108,25 @@ export default function StartJob(){
   if (currentScreen === 'otp-verification') {
     return (
       <div className='container'>
-        <div className='card' style={{padding:20}}>
+        <div className='card' style={{ padding: 20 }}>
           {/* Header */}
-          <div className='row' style={{alignItems:'center', marginBottom:20}}>
-            <button onClick={() => setCurrentScreen('bill-preview')} className='btn' style={{background:'#f3f4f6', color:'#111', padding:'8px 12px', width: 'auto', maxWidth: 'none', height: 'auto'}}>←</button>
-            <h3 className='bold-text' style={{margin:0, fontSize: '18px'}}>Verify OTP</h3>
+          <div className='row' style={{ alignItems: 'center', marginBottom: 20 }}>
+            <button onClick={() => setCurrentScreen('bill-preview')} className='btn' style={{ background: '#f3f4f6', color: '#111', padding: '8px 12px', width: 'auto', maxWidth: 'none', height: 'auto' }}>←</button>
+            <h3 className='bold-text' style={{ margin: 0, fontSize: '18px' }}>Verify OTP</h3>
           </div>
 
           {/* OTP Verification */}
-          <div style={{marginBottom: 32}}>
-            <h3 className='bold-text' style={{fontSize: '20px', marginBottom: 16}}>OTP Verification</h3>
-            
-            <div style={{marginBottom: 24}}>
-              <p className='caption-text' style={{marginBottom: 16}}>
-                OTP Successfully Shared with <span style={{color: 'var(--brand)'}}>{customerName}</span>
+          <div style={{ marginBottom: 32 }}>
+            <h3 className='bold-text' style={{ fontSize: '20px', marginBottom: 16 }}>OTP Verification</h3>
+
+            <div style={{ marginBottom: 24 }}>
+              <p className='caption-text' style={{ marginBottom: 16 }}>
+                OTP Successfully Shared with <span style={{ color: 'var(--brand)' }}>{customerName}</span>
               </p>
-              
-              <div className='stack' style={{gap: 8}}>
-                <label className='text-field' style={{marginBottom: 8}}>Enter OTP</label>
-                <div style={{display: 'flex', gap: 12, justifyContent: 'center'}}>
+
+              <div className='stack' style={{ gap: 8 }}>
+                <label className='text-field' style={{ marginBottom: 8 }}>Enter OTP</label>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                   {otp.map((digit, index) => (
                     <input
                       key={index}
@@ -1157,11 +1160,11 @@ export default function StartJob(){
               </div>
             )}
 
-            <div style={{textAlign: 'center', marginBottom: 32}}>
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
               <p className='caption-text'>
-                Didn't Get The Code? <span 
+                Didn't Get The Code? <span
                   style={{
-                    color: 'var(--brand)', 
+                    color: 'var(--brand)',
                     cursor: 'pointer',
                     textDecoration: 'underline'
                   }}
@@ -1189,8 +1192,8 @@ export default function StartJob(){
             </div>
 
             {/* Call Support */}
-            <div style={{background: '#f8fafc', borderRadius: 12, padding: 16}}>
-              <div className='row' style={{alignItems: 'center', justifyContent: 'center'}}>
+            <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16 }}>
+              <div className='row' style={{ alignItems: 'center', justifyContent: 'center' }}>
                 {/* <span className='text-field' style={{marginRight: 8}}>Call Support:</span>
                 <span className='text-field' style={{marginRight: 8}}>{supportNumber}</span> */}
                 {/* <button style={{background: 'var(--brand)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'}}>
@@ -1202,13 +1205,13 @@ export default function StartJob(){
 
           {/* Verify Button */}
           <div className='btn-center'>
-            <button 
+            <button
               className={`btn ${otpVerifyLoading ? 'btn-loading' : ''}`}
               onClick={async () => {
                 try {
                   setOtpVerifyLoading(true)
                   setOtpVerifyError("")
-                  
+
                   // 1) Verify OTP first; only then mark Zoho ticket completed
                   const otpVerified = await verifyOtpWithServer()
                   console.log('otpVerified', otpVerified)
@@ -1220,7 +1223,7 @@ export default function StartJob(){
 
                   // 2) Mark Zoho ticket completed via local API (best-effort; do not block UI if it fails)
                   await submitZohoVerifyCompleted()
-                  
+
                   // 3) UI success & redirect to Home/Dashboard
                   setShowSuccessModal(true)
                 } catch (error) {
@@ -1271,19 +1274,19 @@ export default function StartJob(){
                 justifyContent: 'center',
                 margin: '0 auto 16px'
               }}>
-                <span style={{color: 'white', fontSize: '24px', fontWeight: 'bold'}}>✓</span>
+                <span style={{ color: 'white', fontSize: '24px', fontWeight: 'bold' }}>✓</span>
               </div>
-              <h3 className='bold-text' style={{fontSize: '18px', marginBottom: 8}}>OTP Verified, Ticket Closed</h3>
-              <p className='caption-text' style={{marginBottom: 24}}>Your ticket Verification is Pending Payment</p>
-              <button className='btn' style={{width: '100%'}} onClick={() => nav('/')}>
+              <h3 className='bold-text' style={{ fontSize: '18px', marginBottom: 8 }}>OTP Verified, Ticket Closed</h3>
+              <p className='caption-text' style={{ marginBottom: 24 }}>Your ticket Verification is Pending Payment</p>
+              <button className='btn' style={{ width: '100%' }} onClick={() => nav('/')}>
                 Back to Home
               </button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  )
-}
+        )}
+      </div>
+    )
+  }
 
   // Confirmation Screen
   if (currentScreen === 'confirmation') {
@@ -1293,7 +1296,7 @@ export default function StartJob(){
       console.log('=== JOB COMPLETION PAYLOAD ===')
       console.log('Full Payload:', payload)
       console.log('================================')
-      
+
       // TODO: Replace this with actual API call
       // Example API call structure:
       /*
@@ -1325,7 +1328,7 @@ export default function StartJob(){
 
     return (
       <div className='container'>
-        <div className='card' style={{padding:20, textAlign: 'center'}}>
+        <div className='card' style={{ padding: 20, textAlign: 'center' }}>
           <div style={{
             width: 80,
             height: 80,
@@ -1336,28 +1339,28 @@ export default function StartJob(){
             justifyContent: 'center',
             margin: '0 auto 24px'
           }}>
-            <span style={{color: 'white', fontSize: '32px', fontWeight: 'bold'}}>✓</span>
+            <span style={{ color: 'white', fontSize: '32px', fontWeight: 'bold' }}>✓</span>
           </div>
-          
-          <h2 className='bold-text' style={{fontSize: '24px', marginBottom: 16, color: 'var(--brand)'}}>Job Completed Successfully!</h2>
-          <p className='text-field' style={{marginBottom: 32}}>Your repair job has been completed and verified. The customer has been notified.</p>
-          
-          <div style={{background: '#f8fafc', borderRadius: 12, padding: 16, marginBottom: 24}}>
-            <div className='row' style={{justifyContent: 'space-between', marginBottom: 8}}>
+
+          <h2 className='bold-text' style={{ fontSize: '24px', marginBottom: 16, color: 'var(--brand)' }}>Job Completed Successfully!</h2>
+          <p className='text-field' style={{ marginBottom: 32 }}>Your repair job has been completed and verified. The customer has been notified.</p>
+
+          <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginBottom: 24 }}>
+            <div className='row' style={{ justifyContent: 'space-between', marginBottom: 8 }}>
               <span className='text-field'>Total Amount:</span>
-              <span className='bold-text' style={{color: 'var(--brand)'}}>{repairData.totalCost}</span>
+              <span className='bold-text' style={{ color: 'var(--brand)' }}>{repairData.totalCost}</span>
             </div>
-            <div className='row' style={{justifyContent: 'space-between', marginBottom: 8}}>
+            <div className='row' style={{ justifyContent: 'space-between', marginBottom: 8 }}>
               <span className='text-field'>Status:</span>
-              <span className='caption-text' style={{color: '#10b981'}}>Completed</span>
+              <span className='caption-text' style={{ color: '#10b981' }}>Completed</span>
             </div>
-            <div className='row' style={{justifyContent: 'space-between'}}>
+            <div className='row' style={{ justifyContent: 'space-between' }}>
               <span className='text-field'>Job ID:</span>
               <span className='caption-text'>{id}</span>
             </div>
           </div>
 
-          <div className='caption-text' style={{marginBottom: 16, fontSize: '11px', color: '#6b7280'}}>
+          <div className='caption-text' style={{ marginBottom: 16, fontSize: '11px', color: '#6b7280' }}>
             📋 All job data has been logged to console for API integration
           </div>
 
