@@ -7,6 +7,7 @@ const API_BASE = import.meta.env.VITE_API_BASE;
 const STORAGE_KEY = (ticketId, mechId) => `jobchat:${ticketId}:${mechId}`;
 
 import { ImCross } from "react-icons/im";
+import MultiStepMessage from '../components/MultiStepMessage';
 
 
 /* BOT_FLOW: index -> behavior (meta shown in Figma) 
@@ -26,6 +27,9 @@ const BOT_FLOW = [
     id: 'issues', type: 'checkbox', title: 'Before you get started, just pick the issues from the list below.', options: [
       'Tyre Burst', 'Tyre Puncture', 'Rim Break/ Damage', 'Air Bulge', 'Tyre Runflat', 'Cuts/ Cracks/ Damage in Sidewalls', 'Belt/ Tread Separation'
     ]
+  },
+  {
+    id: 'approach', type: 'checkbox', title: 'Approach'
   },
   { id: 'finish', type: 'end', title: 'I’ve noted the issues. You can begin the repair.' }
 ];
@@ -48,6 +52,7 @@ export default function JobChatPage({ mechanicIdProp }) {
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState('');
   const [selectedIssues, setSelectedIssues] = useState([]);
+  const [selectedApproach, setSelectedApproach] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [errorText, setErrorText] = useState("");
 
@@ -173,7 +178,7 @@ export default function JobChatPage({ mechanicIdProp }) {
           setFlowIndex(data.flowIndex || 0);
           persistLocal(data, data.messages || [], data.flowIndex || 0);
         }
-        console.log("[JobChat] loaded session from server", { sessionId: data._id, flowIndex: data.flowIndex, messagesCount: (data.messages || []).length });
+        console.log("[JobChat] loaded session from server", { sessionId: data._id, flowIndex: data.flowIndex, messagesCount: (data.messages || []).length, messages: data.messages });
       }
     } catch (err) {
       console.error("[JobChat] loadSession error", err);
@@ -274,6 +279,34 @@ export default function JobChatPage({ mechanicIdProp }) {
     setSubmitting(false);
   }
 
+  async function submitApproach() {
+    if (selectedApproach.length === 0) {
+      alert("Please select at least one issue");
+      return;
+    }
+    setSubmitting(true);
+    await postMessage({ who: "mechanic", text: selectedApproach.join(", "), meta: { type: "issues", approach: selectedApproach } });
+    setSubmitting(false);
+  }
+
+
+
+  async function handleMultiStepSubmit(selectedData, originalMessage) {
+    const payload = {
+      who: "mechanic",
+      text: "",
+      meta: {
+        selected: selectedData, // <-- service + tyreType + approach + patch
+        originalService: originalMessage.meta.service
+      }
+    };
+
+    await axios.post(`/api/jobchat/${ticketId}/message`, payload);
+
+    refreshSession(); // or setMessages(newData)
+  }
+
+
 
   function renderBotBubble(msg, idx) {
     const currentFlow = BOT_FLOW[flowIndex] || {};
@@ -294,6 +327,8 @@ export default function JobChatPage({ mechanicIdProp }) {
       msg.who === 'bot' &&
       (idx === lastBotIndex || (msg.meta && msg.meta.action === 'capture_image'));
 
+    
+
     return (
       <div className="max-w-[92%]" key={idx}>
         <div className="flex items-start gap-3">
@@ -312,7 +347,8 @@ export default function JobChatPage({ mechanicIdProp }) {
               )}
 
               {currentFlow.type === "checkbox" && idx === lastBotIndex && (
-                <div className="mt-3 space-y-2">
+
+                currentFlow.options ? (<div className="mt-3 space-y-2">
                   {currentFlow.options.map(opt => (
                     <label key={opt} className="flex items-center gap-3">
                       <input type="checkbox" checked={selectedIssues.includes(opt)} onChange={() => {
@@ -322,8 +358,21 @@ export default function JobChatPage({ mechanicIdProp }) {
                     </label>
                   ))}
                   <button className="w-full bg-[#FB8C00] text-white rounded-md py-2 mt-3" onClick={submitIssues} disabled={submitting}>Submit</button>
-                </div>
+                </div>) : (
+                  <div className="mt-3 space-y-2">
+                    {messages[messages.length - 1]?.meta?.options?.map(opt => (
+                      <label key={opt} className="flex items-center gap-3">
+                        <input type="checkbox" checked={selectedApproach.includes(opt)} onChange={() => {
+                          setSelectedApproach(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]);
+                        }} />
+                        <span className="text-sm">{opt}</span>
+                      </label>
+                    ))}
+                    <button className="w-full bg-[#FB8C00] text-white rounded-md py-2 mt-3" onClick={submitApproach} disabled={submitting}>Submit</button>
+                  </div>)
               )}
+
+
             </div>
             <div className="text-xs text-gray-400 mt-1">{formatTime(msg.createdAt)}</div>
           </div>
@@ -350,6 +399,16 @@ export default function JobChatPage({ mechanicIdProp }) {
     );
   }
 
+
+
+  const lastMultiStepIndex = messages
+  .map((m, i) => (m.meta?.type === "multi-step" ? i : -1))
+  .filter(i => i !== -1)
+  .pop();  // the last index
+
+
+
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="sticky top-0 z-200 bg-[#EBEBEB] border-b border-gray-200">
@@ -357,14 +416,14 @@ export default function JobChatPage({ mechanicIdProp }) {
           <div className="flex items-center gap-3">
             {/* <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-gray-100">←</button> */}
             <img src={BOT_AVATAR} alt="bot" className="w-8 h-8 p-1 rounded-full object-contain border border-[#FB8C0066] shadow-xl" />
-          
+
             <div>
               <div className="text-sm font-semibold">JK Support</div>
               {/* <div className="text-xs text-gray-500">{driverName ? `${driverName} • ${driverPhone}` : `Ticket ${ticketId || ''}`}</div> */}
             </div>
           </div>
           {/* <div className="text-xs text-gray-400"><ImCross /></div> */}
-          <ImCross className='text-xs font-light' onClick={() => navigate(-1)}/>
+          <ImCross className='text-xs font-light' onClick={() => navigate(-1)} />
         </div>
       </div>
 
@@ -372,11 +431,15 @@ export default function JobChatPage({ mechanicIdProp }) {
         {loading && <div className="text-center text-sm text-gray-500">Loading…</div>}
         {errorText && <div className="text-center text-sm text-red-600">{errorText}</div>}
 
+            {/* Fallback here once multi fail */}
         {messages.map((m, i) => (
           <div className={`w-full flex ${m.who === 'mechanic' ? 'justify-end' : 'justify-start'}`} key={i}>
             {m.who === 'mechanic' ? renderMechanicBubble(m, i) : renderBotBubble(m, i)}
           </div>
         ))}
+
+
+        
       </div>
 
       <div className="bg-white border-t border-gray-200 px-4 py-3">
