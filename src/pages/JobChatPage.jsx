@@ -8,6 +8,7 @@ const STORAGE_KEY = (ticketId, mechId) => `jobchat:${ticketId}:${mechId}`;
 
 import { ImCross } from "react-icons/im";
 import MultiStepMessage from '../components/MultiStepMessage';
+import MultiStepUI from '../components/MultiStepUI';
 
 
 /* BOT_FLOW: index -> behavior (meta shown in Figma) 
@@ -52,12 +53,29 @@ export default function JobChatPage({ mechanicIdProp }) {
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState('');
   const [selectedIssues, setSelectedIssues] = useState([]);
-  const [selectedApproach, setSelectedApproach] = useState([]);
+  //   const [selectedApproach, setSelectedApproach] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [errorText, setErrorText] = useState("");
 
   const listRef = useRef(null);
   const fileRef = useRef(null);
+
+
+  const [stepsOfService, setStepsOfService] = useState({})
+
+  // Issue Mapping Flow State
+  const [tyreTypeOptions, setTyreTypeOptions] = useState([]);
+  const [approachOptions, setApproachOptions] = useState([]);
+  const [patchOptions, setPatchOptions] = useState([]);
+  const [finalServiceOptions, setFinalServiceOptions] = useState([]);
+
+  const [selectedTyreType, setSelectedTyreType] = useState("");
+  const [selectedApproach, setSelectedApproach] = useState("");
+  const [selectedPatch, setSelectedPatch] = useState("");
+
+  const [currentIssue, setCurrentIssue] = useState("");
+
+
 
   useEffect(() => {
     console.log("[JobChat] mount", { ticketId, mechanicId, API_BASE });
@@ -143,6 +161,11 @@ export default function JobChatPage({ mechanicIdProp }) {
     return msgs;
   }
 
+  useEffect(() => {
+    setStepsOfService(messages[messages.length - 1]?.meta)
+    console.log('stepsOfService', stepsOfService)
+  }, [flowIndex, messages])
+
   async function loadSession() {
     setErrorText('');
     setLoading(true);
@@ -178,6 +201,7 @@ export default function JobChatPage({ mechanicIdProp }) {
           setFlowIndex(data.flowIndex || 0);
           persistLocal(data, data.messages || [], data.flowIndex || 0);
         }
+        // console.log('Steps of services' , stepsOfService)
         console.log("[JobChat] loaded session from server", { sessionId: data._id, flowIndex: data.flowIndex, messagesCount: (data.messages || []).length, messages: data.messages });
       }
     } catch (err) {
@@ -247,6 +271,32 @@ export default function JobChatPage({ mechanicIdProp }) {
     }
   }
 
+
+  async function fetchField(filters, field) {
+    try {
+      const params = {};
+  
+      for (const key in filters) {
+        // Only encode '+' → '%2B'
+        params[key] = filters[key].replace(/\+/g, "%2B");
+      }
+  
+      params.field = field;
+  
+      const response = await axios.get(
+        `${API_BASE}/api/issues/getIssueMapping`,
+        { params }
+      );
+  
+      return response.data.values;
+    } catch (error) {
+      console.error("Error fetching issue data:", error);
+      return [];
+    }
+  }
+  
+
+
   function onCaptureClick() {
     fileRef.current?.click();
   }
@@ -275,36 +325,32 @@ export default function JobChatPage({ mechanicIdProp }) {
       return;
     }
     setSubmitting(true);
+    handleIssueMapping(selectedIssues[0])
     await postMessage({ who: "mechanic", text: selectedIssues.join(", "), meta: { type: "issues", issues: selectedIssues } });
     setSubmitting(false);
   }
 
   async function submitApproach() {
     if (selectedApproach.length === 0) {
-      alert("Please select at least one issue");
+      alert("Please select at least one tyreType");
       return;
     }
     setSubmitting(true);
-    await postMessage({ who: "mechanic", text: selectedApproach.join(", "), meta: { type: "issues", approach: selectedApproach } });
+    // await postMessage({ who: "mechanic", text: selectedApproach.join(", "), meta: { type: "issues", approach: selectedApproach } });
     setSubmitting(false);
   }
 
 
 
-  async function handleMultiStepSubmit(selectedData, originalMessage) {
-    const payload = {
-      who: "mechanic",
-      text: "",
-      meta: {
-        selected: selectedData, // <-- service + tyreType + approach + patch
-        originalService: originalMessage.meta.service
-      }
-    };
+  const handleMultiStepSubmit = async (selections, msg) => {
+    // push mechanic reply to chat
+    sendMessageToBackend({
+      type: "multi-step-response",
+      service: msg.meta.service,
+      values: selections
+    });
+  };
 
-    await axios.post(`/api/jobchat/${ticketId}/message`, payload);
-
-    refreshSession(); // or setMessages(newData)
-  }
 
 
 
@@ -327,7 +373,7 @@ export default function JobChatPage({ mechanicIdProp }) {
       msg.who === 'bot' &&
       (idx === lastBotIndex || (msg.meta && msg.meta.action === 'capture_image'));
 
-    
+
 
     return (
       <div className="max-w-[92%]" key={idx}>
@@ -360,7 +406,7 @@ export default function JobChatPage({ mechanicIdProp }) {
                   <button className="w-full bg-[#FB8C00] text-white rounded-md py-2 mt-3" onClick={submitIssues} disabled={submitting}>Submit</button>
                 </div>) : (
                   <div className="mt-3 space-y-2">
-                    {messages[messages.length - 1]?.meta?.options?.map(opt => (
+                    {messages[messages.length - 1].who == "bot" && messages[messages.length - 1]?.meta?.steps[0]?.options?.map(opt => (
                       <label key={opt} className="flex items-center gap-3">
                         <input type="checkbox" checked={selectedApproach.includes(opt)} onChange={() => {
                           setSelectedApproach(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]);
@@ -401,10 +447,216 @@ export default function JobChatPage({ mechanicIdProp }) {
 
 
 
+  const handleIssueMapping = async (issueName) => {
+    setCurrentIssue(issueName);
+
+    // Step 1 → load tyreType
+    const tyreTypes = await fetchField({ issue: issueName }, "tyreType");
+
+    if (!tyreTypes[0]) {
+      // Skip to approach
+      const approaches = await fetchField({ issue: issueName }, "approach");
+      setApproachOptions(approaches);
+    } else {
+      setTyreTypeOptions(tyreTypes);
+    }
+  };
+
+
+  const handleTyreTypeSelect = async (tyreType) => {
+    setSelectedTyreType(tyreType);
+
+    const approaches = await fetchField(
+      { issue: currentIssue, tyreType },
+      "approach"
+    );
+
+    setApproachOptions(approaches);
+  };
+
+  const handleApproachSelect = async (approach) => {
+    setSelectedApproach(approach);
+
+    const patches = await fetchField(
+      { issue: currentIssue, tyreType: selectedTyreType, approach },
+      "patch"
+    );
+
+    console.log("patches" , patches[0].split(':')[1])
+    let strPatches = patches[0].split(':')[1]
+    let patchesValue = strPatches.split(',').map(Number);
+
+
+    console.log("patchesValue" , patchesValue)
+
+
+
+    if (!patches[0]) {
+      const finalServices = await fetchField(
+        { issue: currentIssue, tyreType: selectedTyreType, approach },
+        "finalService"
+      );
+      setFinalServiceOptions(finalServices);
+      return;
+    }
+
+    setPatchOptions(patchesValue);
+  };
+
+  const handlePatchSelect = async (patch) => {
+
+    console.log("patch selelct" , patch)
+    setSelectedPatch(patch);
+
+    const finalServices = await fetchField(
+      {
+        issue: currentIssue,
+        tyreType: selectedTyreType,
+        approach: selectedApproach,
+        patch : selectedPatch
+      },
+      "finalService"
+    );
+
+    setFinalServiceOptions(finalServices);
+  };
+
+
+
+  //   function renderIssueMappingBot(msg, idx) {
+
+  //     console.log('tyreType' , tyreTypeOptions)
+  //     console.log('appraochOptions' , approachOptions)
+
+
+
+  //     // return  null;
+  //     return (
+  //       <div className="max-w-[92%]" key={idx}>
+  //         <div className="flex items-start gap-3">
+  //           <img src={BOT_AVATAR} alt="bot" className="w-8 h-8 rounded-full object-contain border border-[#FB8C0066] shadow-xl" />
+  //           <div>
+  //             <div className="bg-white rounded-tl-none rounded-xl p-3 text-sm text-gray-800 shadow-sm border border-[#FB8C0066]">
+  //               <div className="whitespace-pre-wrap">Please Select Tyre Type</div>
+
+  //               <div className="mt-3 space-y-2">
+  //                 {tyreTypeOptions.map(opt => (
+  //                   <label key={opt} className="flex items-center gap-3">
+  //                     <input type="checkbox" checked={selectedApproach.includes(opt)} onChange={() => {
+  //                       setSelectedApproach(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]);
+  //                     }} />
+  //                     <span className="text-sm">{opt}</span>
+  //                   </label>
+  //                 ))}
+  //                 <button className="w-full bg-[#FB8C00] text-white rounded-md py-2 mt-3" onClick={submitApproach} disabled={submitting}>Submit</button>
+  //               </div>
+
+
+  //             </div>
+  //             <div className="text-xs text-gray-400 mt-1">{formatTime(new Date())}</div>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     );
+  //   }
+
+
+
+  function renderIssueMappingBot() {
+    // Step 1 – Tyre Type (if exists and not selected)
+    if (tyreTypeOptions.length > 0 && !selectedTyreType) {
+      return renderOptions(
+        "Please Select Tyre Type",
+        tyreTypeOptions,
+        (opt) => handleTyreTypeSelect(opt)
+      );
+    }
+  
+    // Step 2 – Approach
+    if (approachOptions.length > 0 && !selectedApproach) {
+      return renderOptions(
+        "Please Select Approach",
+        approachOptions,
+        (opt) => handleApproachSelect(opt)
+      );
+    }
+  
+    // Step 3 – Patch
+    if (patchOptions.length > 0 && !selectedPatch) {
+      return renderOptions(
+        "Please Select Patch",
+        patchOptions,
+        (opt) => handlePatchSelect(opt)
+      );
+    }
+
+    // Step 4 – Final Service
+  // Log final object
+  const finalObject = {
+    tyreType: selectedTyreType || null,
+    approach: selectedApproach || null,
+    patch: selectedPatch || null,
+    finalService: finalServiceOptions.length > 0 ? finalServiceOptions[0] : null // optional
+  };
+  console.log("Final Object for Pricing/Records:", finalObject);
+
+  if (finalServiceOptions.length > 0) {
+    return (
+      <div className="p-4 bg-white rounded-md border shadow-sm mt-3">
+        <p className="text-gray-700 font-medium">Thanks for the details!</p>
+      </div>
+    );
+  }
+  
+    return null;
+  }
+  
+
+
+
+  function renderOptions(title, list, onSelect) {
+    return (
+      <div className="max-w-[92%]">
+        <div className="flex items-start gap-3">
+          <img
+            src={BOT_AVATAR}
+            alt="bot"
+            className="w-8 h-8 rounded-full border border-[#FB8C0066]"
+          />
+          <div>
+            <div className="bg-white rounded-xl p-3 border shadow-sm">
+              <div className="font-medium mb-2">{title}</div>
+
+              <div className="space-y-2">
+                {list.map((opt) => (
+                  <button
+                    key={opt}
+                    className="w-full bg-gray-100 p-2 rounded-md text-left"
+                    onClick={() => onSelect(opt)}
+                  >
+                    {opt || "(None)"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-xs text-gray-400 mt-1">
+              {formatTime(new Date())}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+
+
+
   const lastMultiStepIndex = messages
-  .map((m, i) => (m.meta?.type === "multi-step" ? i : -1))
-  .filter(i => i !== -1)
-  .pop();  // the last index
+    .map((m, i) => (m.meta?.type === "multi-step" ? i : -1))
+    .filter(i => i !== -1)
+    .pop();  // the last index
 
 
 
@@ -431,7 +683,7 @@ export default function JobChatPage({ mechanicIdProp }) {
         {loading && <div className="text-center text-sm text-gray-500">Loading…</div>}
         {errorText && <div className="text-center text-sm text-red-600">{errorText}</div>}
 
-            {/* Fallback here once multi fail */}
+        {/* Fallback here once multi fail */}
         {messages.map((m, i) => (
           <div className={`w-full flex ${m.who === 'mechanic' ? 'justify-end' : 'justify-start'}`} key={i}>
             {m.who === 'mechanic' ? renderMechanicBubble(m, i) : renderBotBubble(m, i)}
@@ -439,7 +691,44 @@ export default function JobChatPage({ mechanicIdProp }) {
         ))}
 
 
-        
+        {/* {
+          messages[messages.length - 1]?.who == "mechanic" && messages[messages.length - 1].meta ?
+            renderIssueMappingBot() : null
+        }
+        {
+          console.log("mapping", messages[messages.length - 1])
+        } */}
+
+
+        {renderIssueMappingBot()}
+
+
+
+
+        {/* {messages.map((msg, idx) => {
+
+          // hide all older multi-step messages
+          if (msg.meta?.type === "multi-step" && idx !== lastMultiStepIndex) {
+            return null;
+          }
+
+          // render only the latest one
+          if (msg.meta?.type === "multi-step" && idx === lastMultiStepIndex) {
+            return (
+              <MultiStepUI
+                key={idx}
+                meta={msg.meta}
+                onSubmit={(data) => handleMultiStepSubmit(data, msg)}
+              />
+            );
+          }
+
+        //   return <div key={idx}>{msg.text}</div>;
+        })} */}
+
+
+
+
       </div>
 
       <div className="bg-white border-t border-gray-200 px-4 py-3">
