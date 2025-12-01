@@ -60,9 +60,6 @@ export default function JobChatPage({ mechanicIdProp }) {
   const listRef = useRef(null);
   const fileRef = useRef(null);
 
-
-  const [stepsOfService, setStepsOfService] = useState({})
-
   // Issue Mapping Flow State
   const [tyreTypeOptions, setTyreTypeOptions] = useState([]);
   const [approachOptions, setApproachOptions] = useState([]);
@@ -74,6 +71,38 @@ export default function JobChatPage({ mechanicIdProp }) {
   const [selectedPatch, setSelectedPatch] = useState("");
 
   const [currentIssue, setCurrentIssue] = useState("");
+
+  // for sending issue mapping messages from bot 
+
+  const [pendingMessage, setPendingMessage] = useState(null)
+  const [botFinalMessageSent , serBotFinalMessageSent] = useState(false)
+
+  function toLabel(str) {
+    return str
+      .replace(/([A-Z])/g, ' $1')   // insert space before capital letters
+      .replace(/^./, s => s.toUpperCase()); // capitalize first letter
+  }
+  
+
+  useEffect(() => {
+    if (!pendingMessage) return;
+
+    (async () => {
+
+      try {
+        await postMessage({
+          who: "mechanic",
+          text: `${toLabel(pendingMessage.step)} : ${pendingMessage.value}`,
+          meta: { type: "mappingStep" }
+        });
+        
+      } catch (error) {
+        console.log("Error posting message : ", err)
+      } finally {
+        setPendingMessage(null)
+      }
+    })()
+  }, [pendingMessage])
 
 
 
@@ -161,10 +190,6 @@ export default function JobChatPage({ mechanicIdProp }) {
     return msgs;
   }
 
-  useEffect(() => {
-    setStepsOfService(messages[messages.length - 1]?.meta)
-    console.log('stepsOfService', stepsOfService)
-  }, [flowIndex, messages])
 
   async function loadSession() {
     setErrorText('');
@@ -201,7 +226,6 @@ export default function JobChatPage({ mechanicIdProp }) {
           setFlowIndex(data.flowIndex || 0);
           persistLocal(data, data.messages || [], data.flowIndex || 0);
         }
-        // console.log('Steps of services' , stepsOfService)
         console.log("[JobChat] loaded session from server", { sessionId: data._id, flowIndex: data.flowIndex, messagesCount: (data.messages || []).length, messages: data.messages });
       }
     } catch (err) {
@@ -275,26 +299,26 @@ export default function JobChatPage({ mechanicIdProp }) {
   async function fetchField(filters, field) {
     try {
       const params = {};
-  
+
       for (const key in filters) {
         // Only encode '+' → '%2B'
         params[key] = filters[key].replace(/\+/g, "%2B");
       }
-  
+
       params.field = field;
-  
+
       const response = await axios.get(
         `${API_BASE}/api/issues/getIssueMapping`,
         { params }
       );
-  
+
       return response.data.values;
     } catch (error) {
       console.error("Error fetching issue data:", error);
       return [];
     }
   }
-  
+
 
 
   function onCaptureClick() {
@@ -482,12 +506,12 @@ export default function JobChatPage({ mechanicIdProp }) {
       "patch"
     );
 
-    console.log("patches" , patches[0].split(':')[1])
+    console.log("patches", patches[0].split(':')[1])
     let strPatches = patches[0].split(':')[1]
-    let patchesValue = strPatches.split(',').map(Number);
+    let patchesValue = strPatches && strPatches.split(',').map(Number);
 
 
-    console.log("patchesValue" , patchesValue)
+    console.log("patchesValue", patchesValue)
 
 
 
@@ -505,7 +529,7 @@ export default function JobChatPage({ mechanicIdProp }) {
 
   const handlePatchSelect = async (patch) => {
 
-    console.log("patch selelct" , patch)
+    console.log("patch selelct", patch)
     setSelectedPatch(patch);
 
     const finalServices = await fetchField(
@@ -513,7 +537,7 @@ export default function JobChatPage({ mechanicIdProp }) {
         issue: currentIssue,
         tyreType: selectedTyreType,
         approach: selectedApproach,
-        patch : selectedPatch
+        patch: selectedPatch
       },
       "finalService"
     );
@@ -563,54 +587,76 @@ export default function JobChatPage({ mechanicIdProp }) {
 
 
   function renderIssueMappingBot() {
-    // Step 1 – Tyre Type (if exists and not selected)
+
+    // Step 1 – Tyre Type
     if (tyreTypeOptions.length > 0 && !selectedTyreType) {
       return renderOptions(
         "Please Select Tyre Type",
         tyreTypeOptions,
-        (opt) => handleTyreTypeSelect(opt)
+        async (opt) => {
+          handleTyreTypeSelect(opt);
+
+          setPendingMessage({
+            step: "tyreType",
+            value: opt
+          });
+        }
       );
     }
-  
+
     // Step 2 – Approach
     if (approachOptions.length > 0 && !selectedApproach) {
       return renderOptions(
         "Please Select Approach",
         approachOptions,
-        (opt) => handleApproachSelect(opt)
+        async (opt) => {
+          handleApproachSelect(opt);
+
+          setPendingMessage({
+            step: "approach",
+            value: opt
+          });
+        }
       );
     }
-  
+
     // Step 3 – Patch
     if (patchOptions.length > 0 && !selectedPatch) {
       return renderOptions(
         "Please Select Patch",
         patchOptions,
-        (opt) => handlePatchSelect(opt)
+        async (opt) => {
+          handlePatchSelect(opt);
+
+          setPendingMessage({
+            step: "patch",
+            value: opt
+          });
+        }
       );
     }
 
     // Step 4 – Final Service
-  // Log final object
-  const finalObject = {
-    tyreType: selectedTyreType || null,
-    approach: selectedApproach || null,
-    patch: selectedPatch || null,
-    finalService: finalServiceOptions.length > 0 ? finalServiceOptions[0] : null // optional
-  };
-  console.log("Final Object for Pricing/Records:", finalObject);
+    // Log final object
+    const finalObject = {
+      tyreType: selectedTyreType || null,
+      approach: selectedApproach || null,
+      patch: selectedPatch || null,
+      finalService: finalServiceOptions.length > 0 ? finalServiceOptions[0] : null // optional
+    };
+    console.log("Final Object for Pricing/Records:", finalObject);
 
-  if (finalServiceOptions.length > 0) {
-    return (
-      <div className="p-4 bg-white rounded-md border shadow-sm mt-3">
-        <p className="text-gray-700 font-medium">Thanks for the details!</p>
-      </div>
-    );
-  }
-  
+    if (finalServiceOptions.length > 0) {
+      return (
+        <div className="p-4 bg-white rounded-md border shadow-sm mt-3">
+          <p className="text-gray-700 font-medium">Thanks for the details!</p>
+        </div>
+      );
+    }
+
     return null;
   }
-  
+
 
 
 
@@ -621,17 +667,17 @@ export default function JobChatPage({ mechanicIdProp }) {
           <img
             src={BOT_AVATAR}
             alt="bot"
-            className="w-8 h-8 rounded-full border border-[#FB8C0066]"
+            className="w-8 h-8 rounded-full object-contain border border-[#FB8C0066] shadow-xl"
           />
           <div>
-            <div className="bg-white rounded-xl p-3 border shadow-sm">
+            <div className="bg-white rounded-tl-none rounded-xl p-3 text-sm text-gray-800 shadow-sm border border-[#FB8C0066]">
               <div className="font-medium mb-2">{title}</div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {list.map((opt) => (
                   <button
                     key={opt}
-                    className="w-full bg-gray-100 p-2 rounded-md text-left"
+                    className="w-full bg-gray-100 p-2 rounded-md text-left active:bg-[#FB8C00] active:text-white"
                     onClick={() => onSelect(opt)}
                   >
                     {opt || "(None)"}
@@ -689,16 +735,6 @@ export default function JobChatPage({ mechanicIdProp }) {
             {m.who === 'mechanic' ? renderMechanicBubble(m, i) : renderBotBubble(m, i)}
           </div>
         ))}
-
-
-        {/* {
-          messages[messages.length - 1]?.who == "mechanic" && messages[messages.length - 1].meta ?
-            renderIssueMappingBot() : null
-        }
-        {
-          console.log("mapping", messages[messages.length - 1])
-        } */}
-
 
         {renderIssueMappingBot()}
 
