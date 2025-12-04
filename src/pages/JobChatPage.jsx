@@ -29,9 +29,9 @@ const BOT_FLOW = [
       'Tyre Burst', 'Tyre Puncture', 'Rim Break/ Damage', 'Air Bulge', 'Tyre Runflat', 'Cuts/ Cracks/ Damage in Sidewalls', 'Belt/ Tread Separation'
     ]
   },
-  { id: 'issue_image', type: 'capture_image', title: 'Capture Pre Repaired Photo' },
+  { id: 'issue_image', type: 'capture_image', title: 'Capture Repaired Photo' },
   { id: 'rate_card', type: 'rate_card', title: 'Here’s the rate card for the services you provided:' },
-  { id: 'finish', type: 'end', title: 'I’ve noted the issues. You can begin the repair.' }
+//   { id: 'finish', type: 'end', title: 'I’ve noted the issues. You can begin the repair.' }
 ];
 
 const BOT_AVATAR = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKFjKVKIji1Xzqr6zWY4yQJvLiFUULD9O_LA&s'
@@ -93,7 +93,7 @@ export default function JobChatPage({ mechanicIdProp }) {
       postMessage({
         who: "bot",
         text: "I’ve noted the issues. You can begin the repair.",
-        meta: { step: "finalMapping" }
+        meta: { step: "finalMapping", values: finalServiceOptions }
       });
     }
   }, [finalServiceOptions]);
@@ -392,10 +392,13 @@ export default function JobChatPage({ mechanicIdProp }) {
   };
 
 
-
-
   function renderBotBubble(msg, idx) {
     const currentFlow = BOT_FLOW[flowIndex] || {};
+    // GET FINAL RATE CARD ONCE
+    const rateCardMessage = messages.find(m => m.meta?.finalRateCard);
+    const finalServiceCost = rateCardMessage?.meta?.finalRateCard;
+
+    // console.log("finalServiceCost", finalServiceCost);
 
     // determine last bot message index (so only that bot message shows active CTAs)
     const lastBotIndex = (() => {
@@ -418,7 +421,7 @@ export default function JobChatPage({ mechanicIdProp }) {
     return (
       <div className="max-w-[92%]" key={idx}>
         <div className="flex items-start gap-3">
-          <img src={BOT_AVATAR} alt="bot" className="w-8 h-8 rounded-full object-contain border border-[#FB8C0066] shadow-xl" />
+          <img src={BOT_AVATAR} alt="bot" className="w-8 h-8 rounded-full object-contain border-2 border-[#FB8C0066] shadow-xl" />
           <div>
             <div className="bg-white rounded-tl-none rounded-xl p-3 text-sm text-gray-800 shadow-sm border border-[#FB8C0066]">
               <div className="whitespace-pre-wrap">{msg.text}</div>
@@ -461,33 +464,32 @@ export default function JobChatPage({ mechanicIdProp }) {
 
               {
                 currentFlow.type === "rate_card" && idx === lastBotIndex && (
-                  <div className="w-full max-w-xs bg-gray-100 rounded-lg px-4 py-3 text-sm shadow-sm border">
+                  <div className="w-full max-w-xs bg-gray-100 rounded-lg px-4 py-3 text-sm shadow-lg my-2 border-gray-300 border">
                     {/* Header */}
                     <div className="flex justify-between font-semibold text-gray-700 mb-2">
                       <span>Services</span>
                       <span>Prices</span>
                     </div>
 
-                    <div className="border-t border-gray-300"></div>
+                    <div className=""></div>
 
-                    {/* Service Row 1 */}
-                    <div className="flex justify-between py-2">
-                      <span className="text-gray-700">Puncture Repair</span>
-                      <span className="font-medium text-gray-900">₹250</span>
-                    </div>
 
-                    {/* Service Row 2 */}
-                    <div className="flex justify-between py-2">
-                      <span className="text-gray-700">Air Pressure Check</span>
-                      <span className="font-medium text-gray-500">Complimentary</span>
-                    </div>
+
+                    {finalServiceCost?.success && Number(finalServiceCost?.totalCost) > 0 && (
+                      finalServiceCost.breakdown?.map((item, index) => (
+                        <div key={index} className="flex justify-between py-2">
+                          <span className="text-gray-700">{item.service}</span>
+                          <span className="font-medium text-gray-900">₹{item.cost}</span>
+                        </div>
+                      ))
+                    )}
 
                     <div className="border-t border-gray-300 mt-1"></div>
 
                     {/* Total */}
                     <div className="flex justify-between py-2 font-semibold text-gray-900">
                       <span>Total</span>
-                      <span>₹250</span>
+                      <span className='font-bold'>₹{finalServiceCost?.totalCost}</span>
                     </div>
                   </div>
 
