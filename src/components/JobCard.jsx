@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { MdArrowForwardIos } from "react-icons/md";
+
 
 export default function JobCard({ job, showPriority = false, showCategory = false, fullTicket = null }) {
   const nav = useNavigate()
@@ -93,17 +95,32 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
     }
   }
 
+
+
+  const goToJobChat = () => {
+    if (!fullTicket?.zohoTicketId) return;
+  
+    nav(`/job-chat/${fullTicket.zohoTicketId}`, {
+      state: {
+        driverName: fullTicket?.cf?.cf_driver_name,
+        driverPhone: fullTicket?.cf?.cf_driver_phone_number
+      }
+    });
+  };
+
   return (
     <div
       className='card job-card list-card'
-      onClick={handleCardClick}
-      style={{ cursor: fullTicket ? 'pointer' : 'default' }}
+      onClick={job.issue === "Job closed" ? undefined : goToJobChat}
+      // style={{ cursor: fullTicket ? 'pointer' : 'default' }}
+      style={{ cursor: job.issue === "Job closed" ? 'default' : 'pointer' }}
     >
       <div className='job-card-content'>
         <div className='job-card-header'>
           <div className='ticket-id'>Ticket ID: #{job.vehicle}</div>
           <div className='job-time'>
             {formatTime(job.createdAt || job.originalTicket?.createdAt) || job.time || 'N/A'}
+            {/* {job.issue} */}
           </div>
         </div>
 
@@ -153,7 +170,13 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
               return phone;
             })()
           }
+          {
+            job.issue != "Job closed" ? (<p className='goChatArrow'><MdArrowForwardIos/></p>) : (<></>)
+          }
+          
         </div>
+
+          
 
         {/* Category */}
         {/* {showCategory && job.category && (
@@ -163,17 +186,20 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
           </div>
         )} */}
 
-        <div className='ticket-issue-section'>
-          {/* <div className='ticket-issue-label'>Ticket Issue</div> */}
+
+
+        {/* Start Job Button below */}
+
+        {/* <div className='ticket-issue-section'>
           <div className='ticket-issue-content'>
             <div className='issue-text'>Tyre Burst</div>
-            
-            {job.issue === "Job closed" ? "" : <button className='start-job-btn' onClick={() => nav(`/job-chat/${fullTicket?.zohoTicketId }`, {
+
+            {job.issue === "Job closed" ? "" : <button className='start-job-btn' onClick={() => nav(`/job-chat/${fullTicket?.zohoTicketId}`, {
               state: { driverName: fullTicket?.cf?.cf_driver_name, driverPhone: fullTicket?.cf?.cf_driver_phone_number }
             })}>Start Job</button>}
 
           </div>
-        </div>
+        </div> */}
 
         {/* Due Date */}
         {/* {job.dueDate && (
