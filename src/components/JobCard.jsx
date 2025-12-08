@@ -108,7 +108,7 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
         </div>
 
         {/* Priority Badge */}
-        {showPriority && job.priority && (
+        {/* {showPriority && job.priority && (
           <div style={{
             background: getPriorityColor(job.priority),
             color: 'white',
@@ -121,7 +121,7 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
           }}>
             {job.priority} Priority
           </div>
-        )}
+        )} */}
 
         {/* Payment Status Badge - Show for completed jobs */}
         {/* {job.issue === 'Completed' && (
@@ -141,25 +141,33 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
           </div>
         )} */}
 
-        <div className='vehicle-number'>{job.customer}</div>
-        <div className='customer-info'>Phone: {job.mobile} | Email: {job.email || 'N/A'}</div>
+        <div className='vehicle-number'>{fullTicket?.cf?.cf_driver_vehicle_number || 'N/A'}</div>
+        {/* <div className='customer-info'>Phone: {job.mobile} | Email: {job.email || 'N/A'}</div> */}
+        <div className='customer-info'>
+          {fullTicket?.cf?.cf_driver_name || 'N/A'} | {
+            (() => {
+              const phone = fullTicket?.cf?.cf_driver_phone_number || 'N/A';
+              if (typeof phone === 'string' && phone.startsWith('+91') && phone.length > 3) {
+                return '+91 ' + phone.slice(3);
+              }
+              return phone;
+            })()
+          }
+        </div>
 
         {/* Category */}
-        {showCategory && job.category && (
+        {/* {showCategory && job.category && (
           <div style={{ marginBottom: '8px' }}>
             <span className='caption-text'>Category: </span>
             <span className='text-field'>{job.category}</span>
           </div>
-        )}
+        )} */}
 
         <div className='ticket-issue-section'>
-          <div className='ticket-issue-label'>Job Status</div>
+          {/* <div className='ticket-issue-label'>Ticket Issue</div> */}
           <div className='ticket-issue-content'>
-            <div className='issue-text' style={{ color: getStatusColor(job.issue) }}>{job.issue}</div>
-            {/* {job.issue === "Job closed" ? "" : <button className='start-job-btn' onClick={(e) => {
-              e.stopPropagation()
-              nav(`/jobs/${job.id}/start`)
-            }}>Start Job</button>} */}
+            <div className='issue-text'>Tyre Burst</div>
+            
             {job.issue === "Job closed" ? "" : <button className='start-job-btn' onClick={() => nav(`/job-chat/${fullTicket?.zohoTicketId }`, {
               state: { driverName: fullTicket?.cf?.cf_driver_name, driverPhone: fullTicket?.cf?.cf_driver_phone_number }
             })}>Start Job</button>}
@@ -168,12 +176,12 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
         </div>
 
         {/* Due Date */}
-        {job.dueDate && (
+        {/* {job.dueDate && (
           <div style={{ marginTop: '8px' }}>
             <span className='caption-text'>Due: </span>
             <span className='text-field'>{new Date(job.dueDate).toLocaleDateString()}</span>
           </div>
-        )}
+        )} */}
 
 
 

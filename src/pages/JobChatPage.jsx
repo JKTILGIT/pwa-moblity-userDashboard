@@ -10,15 +10,6 @@ import { ImCross } from "react-icons/im";
 import MultiStepMessage from '../components/MultiStepMessage';
 import MultiStepUI from '../components/MultiStepUI';
 
-
-/* BOT_FLOW: index -> behavior (meta shown in Figma) 
-   Align indices with backend handlers. Example:
-   0: greeting (details)
-   1: capture vehicle plate
-   2: capture stencil
-   3: pick issues (checkbox list)
-   4: additional inputs / finish
-*/
 const BOT_FLOW = [
   { id: 'greeting', type: 'info' },
   { id: 'vehicle_plate', type: 'capture_image', title: 'Please upload a photo of the vehicle’s number plate to verify the record.' },
@@ -76,6 +67,19 @@ export default function JobChatPage({ mechanicIdProp }) {
   const [pendingMessage, setPendingMessage] = useState(null)
   const [botFinalMessageSent, serBotFinalMessageSent] = useState(false)
 
+
+  // ticket Details
+  const [ticketDetails, setTicketDetails] = useState(null);
+
+  const fetchTicketDetails = async () => {
+    const response = await fetch(`${API_BASE}/api/zoho/ticket/${ticketId}`);
+    const data = await response.json();
+    setTicketDetails(data?.data);
+  }
+
+  useEffect(() => {
+    fetchTicketDetails();
+  }, [ticketId]);
 
 
 
@@ -150,34 +154,6 @@ export default function JobChatPage({ mechanicIdProp }) {
     loadSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId, mechanicId]);
-
-  //   async function loadSession() {
-  //     setErrorText("");
-  //     setLoading(true);
-  //     try {
-  //       // Note: backend route expected is GET /api/jobchat/:ticketId
-  //       // pass mechanicId as query param to identify the user (or rely on auth cookie)
-  //       const url = `${API_BASE}/api/jobchat/${ticketId}?mechanicId=${encodeURIComponent(mechanicId)}`;
-  //       console.log("[JobChat] GET", url);
-  //       const res = await axios.get(url, { withCredentials: true, timeout: 8000 });
-  //       const data = res.data?.data;
-  //       if (!data) {
-  //         setErrorText("Server returned empty session data.");
-  //         console.warn("[JobChat] empty data", res.data);
-  //       } else {
-  //         setSession(data);
-  //         setMessages(data.messages || []);
-  //         setFlowIndex(data.flowIndex || 0);
-  //         persistLocal(data, data.messages || [], data.flowIndex || 0);
-  //         console.log("[JobChat] loaded session from server", { sessionId: data._id, flowIndex: data.flowIndex, messagesCount: (data.messages || []).length });
-  //       }
-  //     } catch (err) {
-  //       console.error("[JobChat] loadSession error", err);
-  //       setErrorText(`Failed to load session: ${err?.message || err}`);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
 
   function makeInitialBotMessages(ticketId, driverName, driverPhone) {
     const msgs = [];
@@ -774,7 +750,7 @@ export default function JobChatPage({ mechanicIdProp }) {
             <img src={BOT_AVATAR} alt="bot" className="w-8 h-8 p-1 rounded-full object-contain border border-[#FB8C0066] shadow-xl" />
 
             <div>
-              <div className="text-sm font-semibold">JK Support</div>
+              <div className="text-sm font-semibold">{ticketDetails?.cf?.cf_driver_vehicle_number}</div>
               {/* <div className="text-xs text-gray-500">{driverName ? `${driverName} • ${driverPhone}` : `Ticket ${ticketId || ''}`}</div> */}
             </div>
           </div>
