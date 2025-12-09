@@ -22,7 +22,7 @@ const BOT_FLOW = [
   },
   { id: 'issue_image', type: 'capture_image', title: 'Capture Repaired Photo' },
   { id: 'rate_card', type: 'rate_card', title: 'Here’s the rate card for the services you provided:' },
-//   { id: 'finish', type: 'end', title: 'I’ve noted the issues. You can begin the repair.' }
+  //   { id: 'finish', type: 'end', title: 'I’ve noted the issues. You can begin the repair.' }
 ];
 
 const BOT_AVATAR = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKFjKVKIji1Xzqr6zWY4yQJvLiFUULD9O_LA&s'
@@ -66,6 +66,10 @@ export default function JobChatPage({ mechanicIdProp }) {
 
   const [pendingMessage, setPendingMessage] = useState(null)
   const [botFinalMessageSent, serBotFinalMessageSent] = useState(false)
+
+
+  const [askedForConfirmation, setAskedForConfirmation] = useState(false);
+
 
 
   // ticket Details
@@ -368,6 +372,29 @@ export default function JobChatPage({ mechanicIdProp }) {
   };
 
 
+  useEffect(() => {
+    const lastBotMsg = messages[messages.length - 1];
+
+    console.log("lastBotMsg", lastBotMsg)
+
+    if (
+      flowIndex === 6 &&
+      lastBotMsg?.meta?.finalRateCard &&
+      !askedForConfirmation
+    ) {
+      setAskedForConfirmation(true);
+
+      postMessage({
+        who: "bot",
+        text: "Please confirm the services to generate the invoice.",
+        meta: { action: "confirm_job" }
+      });
+    }
+  }, [messages, flowIndex]);
+
+
+
+
   function renderBotBubble(msg, idx) {
     const currentFlow = BOT_FLOW[flowIndex] || {};
     // GET FINAL RATE CARD ONCE
@@ -438,10 +465,10 @@ export default function JobChatPage({ mechanicIdProp }) {
               )}
 
 
-              {
-                currentFlow.type === "rate_card" && idx === lastBotIndex && (
+              {/* {
+                currentFlow.type === "rate_card" && msg?.meta?.finalRateCard && (
                   <div className="w-full max-w-xs bg-gray-100 rounded-lg px-4 py-3 text-sm shadow-lg my-2 border-gray-300 border">
-                    {/* Header */}
+                    
                     <div className="flex justify-between font-semibold text-gray-700 mb-2">
                       <span>Services</span>
                       <span>Prices</span>
@@ -462,7 +489,6 @@ export default function JobChatPage({ mechanicIdProp }) {
 
                     <div className="border-t border-gray-300 mt-1"></div>
 
-                    {/* Total */}
                     <div className="flex justify-between py-2 font-semibold text-gray-900">
                       <span>Total</span>
                       <span className='font-bold'>₹{finalServiceCost?.totalCost}</span>
@@ -470,7 +496,62 @@ export default function JobChatPage({ mechanicIdProp }) {
                   </div>
 
                 )
+              } */}
+
+
+              {
+                msg.who === "bot" &&
+                msg.text?.includes("Here’s the rate card") &&
+                finalServiceCost && (
+                  <div className="w-full max-w-xs bg-gray-100 rounded-lg px-4 py-3 text-sm shadow-lg my-2 border-gray-300 border">
+                    <div className="flex justify-between font-semibold text-gray-700 mb-2">
+                      <span>Services</span>
+                      <span>Prices</span>
+                    </div>
+
+                    {finalServiceCost.success &&
+                      Number(finalServiceCost.totalCost) > 0 &&
+                      finalServiceCost.breakdown?.map((item, index) => (
+                        <div key={index} className="flex justify-between py-2">
+                          <span className="text-gray-700">{item.service}</span>
+                          <span className="font-medium text-gray-900">₹{item.cost}</span>
+                        </div>
+                      ))
+                    }
+
+                    <div className="border-t border-gray-300 mt-1"></div>
+
+                    <div className="flex justify-between py-2 font-semibold text-gray-900">
+                      <span>Total</span>
+                      <span className='font-bold'>₹{finalServiceCost.totalCost}</span>
+                    </div>
+                  </div>
+                )
               }
+
+
+
+
+              {msg.meta?.action === "confirm_job" && (
+                <div className="mt-3">
+                  <button
+                    className="w-full bg-[#FB8C00] text-white rounded-md py-3 font-semibold"
+                    onClick={() => {
+                      postMessage({
+                        who: "bot",
+                        text: "Thanks for confirming, your job is closed ✅",
+                        meta: { action: "job_closed" }
+                      });
+
+                      // OPTIONAL: call backend close job API
+                      // axios.post(`${API_BASE}/api/jobs/close/${ticketId}`)
+                    }}
+                  >
+                    Confirm
+                  </button>
+                </div>
+              )}
+
 
 
             </div>
