@@ -406,34 +406,38 @@ export default function JobChatPage({ mechanicIdProp }) {
     issue,
   }) => {
     try {
-    //   await axios.patch(
-    //     `${API_BASE}/api/zoho/ticket/updateViaFraud`,
-    //     {
-    //       mechanicId,
-    //       driverPhone,
-    //       regNumber,
-    //       billAmount,
-    //       ticketId,
-    //     //   startJobTime,
-    //     //   endJobTime,
-    //       data: {
-    //         cf: {
-    //           cf_issue1: issue,
-    //         //   cf_issue2: "isme bhi kuch hogaya hai",
-    //         },
-    //       },
-    //     },
-    //     {
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //       },
-    //     }
-    //   );
+      const response = await axios.patch(
+        `${API_BASE}/api/zoho/ticket/updateViaFraud`,
+        {
+          mechanicId,
+          driverPhone,
+          regNumber,
+          billAmount,
+          ticketId,
+        //   startJobTime,
+        //   endJobTime,
+          data: {
+            cf: {
+              cf_issue1: issue,
+            },
+          },
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+
+      console.log("response" , response?.data?.data)
+
+      let textToSend = response?.data?.data?.fraud ? `Thanks for confirming ✅, Your job has been sent for ${response?.data?.data?.zohoStatus} .` : 'Thanks for confirming, your job is closed ✅'
 
       // Add bot message after success
       postMessage({
         who: "bot",
-        text: "Thanks for confirming, your job is closed ✅",
+        text: textToSend,
         meta: { action: "job_closed" },
       });
     } catch (err) {
