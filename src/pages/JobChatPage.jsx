@@ -395,6 +395,53 @@ export default function JobChatPage({ mechanicIdProp }) {
 
 
 
+  const handleConfirmJob = async ({
+    ticketId,
+    mechanicId,
+    driverPhone,
+    regNumber,
+    billAmount,
+    startJobTime,
+    endJobTime,
+    issue,
+  }) => {
+    try {
+    //   await axios.patch(
+    //     `${API_BASE}/api/zoho/ticket/updateViaFraud`,
+    //     {
+    //       mechanicId,
+    //       driverPhone,
+    //       regNumber,
+    //       billAmount,
+    //       ticketId,
+    //     //   startJobTime,
+    //     //   endJobTime,
+    //       data: {
+    //         cf: {
+    //           cf_issue1: issue,
+    //         //   cf_issue2: "isme bhi kuch hogaya hai",
+    //         },
+    //       },
+    //     },
+    //     {
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //     }
+    //   );
+
+      // Add bot message after success
+      postMessage({
+        who: "bot",
+        text: "Thanks for confirming, your job is closed ✅",
+        meta: { action: "job_closed" },
+      });
+    } catch (err) {
+      console.error("Failed to close job:", err);
+    }
+  };
+
+
   function renderBotBubble(msg, idx) {
     const currentFlow = BOT_FLOW[flowIndex] || {};
     // GET FINAL RATE CARD ONCE
@@ -532,7 +579,7 @@ export default function JobChatPage({ mechanicIdProp }) {
 
 
 
-              {msg.meta?.action === "confirm_job" && (
+              {/* {msg.meta?.action === "confirm_job" && (
                 <div className="mt-3">
                   <button
                     className="w-full bg-[#FB8C00] text-white rounded-md py-3 font-semibold"
@@ -542,15 +589,37 @@ export default function JobChatPage({ mechanicIdProp }) {
                         text: "Thanks for confirming, your job is closed ✅",
                         meta: { action: "job_closed" }
                       });
-
-                      // OPTIONAL: call backend close job API
-                      // axios.post(`${API_BASE}/api/jobs/close/${ticketId}`)
                     }}
                   >
                     Confirm
                   </button>
                 </div>
+              )} */}
+
+              {msg.meta?.action === "confirm_job" && (
+                <div className="mt-3">
+                  <button
+                    className="w-full bg-[#FB8C00] text-white rounded-md py-3 font-semibold"
+                    onClick={() =>
+                        handleConfirmJob({
+                          ticketId,
+                          mechanicId,
+                          driverPhone,
+                          regNumber : ticketId?.cf?.cf_driver_vehicle_number,
+                          billAmount: finalServiceCost?.totalCost,
+                        //   startJobTime,
+                        //   endJobTime,
+                        issue :  messages.find(
+                            (m) => m.meta?.type === "issues" && Array.isArray(m.meta?.issues)
+                          )?.meta?.issues?.[0]
+                        })
+                      }
+                  >
+                    Confirm
+                  </button>
+                </div>
               )}
+
 
 
 

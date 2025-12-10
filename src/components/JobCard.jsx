@@ -2,6 +2,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MdArrowForwardIos } from "react-icons/md";
+import axios from 'axios';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 
 export default function JobCard({ job, showPriority = false, showCategory = false, fullTicket = null }) {
@@ -97,16 +99,51 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
 
 
 
-  const goToJobChat = () => {
+  // const goToJobChat = () => {
+  //   if (!fullTicket?.zohoTicketId) return;
+
+
+  //   nav(`/job-chat/${fullTicket.zohoTicketId}`, {
+  //     state: {
+  //       driverName: fullTicket?.cf?.cf_driver_name,
+  //       driverPhone: fullTicket?.cf?.cf_driver_phone_number
+  //     }
+  //   });
+  // };
+
+
+  const goToJobChat = async () => {
     if (!fullTicket?.zohoTicketId) return;
   
-    nav(`/job-chat/${fullTicket.zohoTicketId}`, {
-      state: {
-        driverName: fullTicket?.cf?.cf_driver_name,
-        driverPhone: fullTicket?.cf?.cf_driver_phone_number
+    try {
+      if (fullTicket?.status === "Ticket Created") {
+        await axios.patch(
+          `${API_BASE}/api/zoho/tickets/${fullTicket.zohoTicketId}`,
+          {
+            data: {
+              status: "In progress",
+            },
+            tokenDetails: null,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
       }
-    });
+  
+      nav(`/job-chat/${fullTicket.zohoTicketId}`, {
+        state: {
+          driverName: fullTicket?.cf?.cf_driver_name,
+          driverPhone: fullTicket?.cf?.cf_driver_phone_number
+        }
+      });
+    } catch (error) {
+      console.error("Ticket update failed:", error);
+    }
   };
+  
 
   return (
     <div
@@ -119,8 +156,8 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
         <div className='job-card-header'>
           <div className='ticket-id'>Ticket ID: #{job.vehicle}</div>
           <div className='job-time'>
-            {formatTime(job.createdAt || job.originalTicket?.createdAt) || job.time || 'N/A'}
-            {/* {job.issue} */}
+            {/* {formatTime(job.createdAt || job.originalTicket?.createdAt) || job.time || 'N/A'} */}
+            {fullTicket?.status}
           </div>
         </div>
 
