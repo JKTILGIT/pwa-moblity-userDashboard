@@ -1,5 +1,5 @@
 /* src/pages/JobChatPage.jsx */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
@@ -429,8 +429,43 @@ export default function JobChatPage({ mechanicIdProp }) {
         }
       );
 
+      console.log("Job confirm response:" , response?.data?.data)
 
-      console.log("response" , response?.data?.data)
+
+      const fileUrls = messages
+  .filter(
+    msg =>
+      typeof msg?.imageUrl === "string" &&
+      msg.imageUrl.trim() !== ""
+  )
+  .map(msg => msg.imageUrl);
+
+
+      console.log("fileUrls----->" , fileUrls)
+
+      if (fileUrls.length > 0) {
+        axios
+          .patch(
+            `${API_BASE}/api/zoho/ticket/uploadAttachment/${ticketId}`,
+            { fileUrls },
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          )
+          .then(() => {
+            console.log("Attachments uploaded successfully");
+          })
+          .catch((err) => {
+            console.error(
+              "Attachment upload failed (non-blocking):",
+              err?.response?.data || err.message
+            );
+          });
+      }
+
+      
 
       let textToSend = response?.data?.data?.fraud ? `Thanks for confirming ✅, Your job has been sent for ${response?.data?.data?.zohoStatus} .` : 'Thanks for confirming, your job is closed ✅'
 
