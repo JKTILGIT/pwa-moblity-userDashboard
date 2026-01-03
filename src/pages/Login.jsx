@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { loginWithPin } from '../api/auth'
 import { toast } from 'react-hot-toast'
 
 export default function Login(){
+  const { t } = useTranslation()
   const [mobile, setMobile] = useState('')
   const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
@@ -26,9 +28,9 @@ export default function Login(){
   };
 
   const onPinLogin = async () => {
-    if (!mobile) return toast.error('Please enter mobile number')
-    if (!validateMobile(mobile)) return toast.error('Please enter a valid 10-digit mobile number')
-    if (!pin) return toast.error('Please enter PIN')
+    if (!mobile) return toast.error(t('login.pleaseEnterMobile'))
+    if (!validateMobile(mobile)) return toast.error(t('login.pleaseEnterValidMobile'))
+    if (!pin) return toast.error(t('login.pleaseEnterPin'))
     
     try {
       setLoading(true)
@@ -43,16 +45,16 @@ export default function Login(){
       localStorage.setItem('access_token', token)
       localStorage.setItem('user', JSON.stringify(user))
 
-      toast.success('Login successful')
+      toast.success(t('login.loginSuccessful'))
       unlockAudio()
       
       // Notify app & redirect
       window.dispatchEvent(new Event('auth-updated'))
       window.location.replace('/')
     } catch(e) {
-      const errorMessage = e?.response?.data?.message || e?.message || 'PIN login failed'
+      const errorMessage = e?.response?.data?.message || e?.message || t('login.pinLoginFailed')
       if (errorMessage.includes('not found') || errorMessage.includes('invalid')) {
-        toast.error('Driver not found. Please check your mobile number and PIN.')
+        toast.error(t('login.driverNotFound'))
       } else {
         toast.error(errorMessage)
       }
@@ -72,12 +74,12 @@ export default function Login(){
 
       <div className='login-panel'>
         <div className='panel-body'>
-          <h2 className='login-welcome'>Welcome User!</h2>
-          <small className='login-follow'>Complete The Following Details to Login</small>
+          <h2 className='login-welcome'>{t('login.welcomeUser')}</h2>
+          <small className='login-follow'>{t('login.completeDetails')}</small>
 
           <div className='login-form'>
             <div className='stack'>
-              <label className='login-mobile-label'>Mobile Number</label>
+              <label className='login-mobile-label'>{t('login.mobileNumber')}</label>
               <div className='row'>
                 <select className='input' style={{maxWidth:84}} defaultValue='+91'>
                   <option value='+91'>+91</option>
@@ -85,7 +87,7 @@ export default function Login(){
                 </select>
                 <input 
                   className='input' 
-                  placeholder='Enter mobile number' 
+                  placeholder={t('login.enterMobileNumber')} 
                   value={mobile} 
                   onChange={e=>setMobile(e.target.value)}
                   maxLength={10}
@@ -94,11 +96,11 @@ export default function Login(){
             </div>
 
             <div className='stack'>
-              <label className='login-pin-label'>Enter PIN</label>
+              <label className='login-pin-label'>{t('login.enterPin')}</label>
               <input 
                 type='password' 
                 className='input' 
-                placeholder='Enter PIN' 
+                placeholder={t('login.enterPin')} 
                 value={pin} 
                 onChange={e=>setPin(e.target.value)}
                 disabled={loading}
@@ -110,7 +112,7 @@ export default function Login(){
               onClick={onPinLogin} 
               disabled={loading}
             >
-              {loading ? 'Logging in...' : 'Continue'}
+              {loading ? t('login.loggingIn') : t('login.continue')}
             </button>
           </div>
         </div>

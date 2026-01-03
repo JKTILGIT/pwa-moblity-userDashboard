@@ -1,12 +1,14 @@
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 export default function KYC(){
+  const { t } = useTranslation()
   return (
     <div className='container'>
       <div className='card' style={{padding:16}}>
-        <h3>KYC & Documents</h3>
-        <p className='text-field'>Upload Aadhaar, PAN, etc.</p>
+        <h3>{t('kyc.kycDocuments')}</h3>
+        <p className='text-field'>{t('kyc.uploadDocuments')}</p>
       </div>
     </div>
   )

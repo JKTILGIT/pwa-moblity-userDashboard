@@ -1,6 +1,7 @@
 
 import React from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import HomeIcon from '@mui/icons-material/Home'
 import WorkIcon from '@mui/icons-material/Work'
 import PaymentIcon from '@mui/icons-material/Payment'
@@ -18,12 +19,13 @@ const Item = ({to, label, icon: Icon}) => {
 }
 
 export default function BottomNav(){
+  const { t } = useTranslation()
   return (
     <div className='bottom-nav'>
-      <Item to='/' label='Home' icon={HomeIcon} />
-      <Item to='/jobs' label='Jobs' icon={WorkIcon} />
-      <Item to='/payments' label='Payments' icon={PaymentIcon} />
-      <Item to='/profile' label='Profile' icon={PersonIcon} />
+      <Item to='/' label={t('bottomNav.home')} icon={HomeIcon} />
+      <Item to='/jobs' label={t('bottomNav.jobs')} icon={WorkIcon} />
+      <Item to='/payments' label={t('bottomNav.payments')} icon={PaymentIcon} />
+      <Item to='/profile' label={t('bottomNav.profile')} icon={PersonIcon} />
     </div>
   )
 }

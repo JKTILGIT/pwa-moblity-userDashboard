@@ -1,18 +1,20 @@
 import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 export default function TicketDetails() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const ticket = location.state?.ticket
 
   if (!ticket) {
     return (
       <div className='container'>
         <div className='card' style={{ padding: '20px', textAlign: 'center' }}>
-          <h3>Ticket not found</h3>
+          <h3>{t('ticketDetails.ticketNotFound')}</h3>
           <button className='btn-primary' onClick={() => navigate('/')}>
-            Back to Home
+            {t('ticketDetails.backToHome')}
           </button>
         </div>
       </div>
@@ -44,9 +46,9 @@ export default function TicketDetails() {
       {/* Header */}
       <div className='card ticket-header-card'>
         <div className='ticket-header-content'>
-          <h2 className='ticket-title'>Ticket Details</h2>
+          <h2 className='ticket-title'>{t('ticketDetails.ticketDetails')}</h2>
           <button className='btn-secondary back-btn' onClick={() => navigate('/')}>
-            ← Back
+            {t('ticketDetails.back')}
           </button>
         </div>
         
@@ -55,7 +57,7 @@ export default function TicketDetails() {
             background: getPriorityColor(ticket.priority),
             color: 'white'
           }}>
-            {ticket.priority} Priority
+            {ticket.priority} {t('ticketDetails.priority')}
           </div>
           <div className='status-badge' style={{
             background: getStatusColor(ticket.status),
@@ -68,26 +70,26 @@ export default function TicketDetails() {
 
       {/* Basic Information */}
       <div className='card ticket-info-card'>
-        <h3 className='ticket-section-title'>Basic Information</h3>
+        <h3 className='ticket-section-title'>{t('ticketDetails.basicInformation')}</h3>
         <div className='ticket-info-grid'>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Ticket ID:</span>
+            <span className='caption-text'>{t('ticketDetails.ticketId')}</span>
             <div className='text-field'>#{ticket.zohoTicketId}</div>
           </div>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Subject:</span>
+            <span className='caption-text'>{t('ticketDetails.subject')}</span>
             <div className='text-field'>{ticket.subject}</div>
           </div>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Category:</span>
+            <span className='caption-text'>{t('ticketDetails.category')}</span>
             <div className='text-field'>{ticket.category} - {ticket.subCategory}</div>
           </div>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Channel:</span>
+            <span className='caption-text'>{t('ticketDetails.channel')}</span>
             <div className='text-field'>{ticket.channel}</div>
           </div>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Language:</span>
+            <span className='caption-text'>{t('ticketDetails.language')}</span>
             <div className='text-field'>{ticket.language}</div>
           </div>
         </div>
@@ -95,18 +97,18 @@ export default function TicketDetails() {
 
       {/* Contact Information */}
       <div className='card ticket-info-card'>
-        <h3 className='ticket-section-title'>Contact Information</h3>
+        <h3 className='ticket-section-title'>{t('ticketDetails.contactInformation')}</h3>
         <div className='ticket-info-grid'>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Email:</span>
+            <span className='caption-text'>{t('ticketDetails.email')}</span>
             <div className='text-field'>{ticket.email}</div>
           </div>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Phone:</span>
+            <span className='caption-text'>{t('ticketDetails.phone')}</span>
             <div className='text-field'>{ticket.phone}</div>
           </div>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Contact ID:</span>
+            <span className='caption-text'>{t('ticketDetails.contactId')}</span>
             <div className='text-field'>{ticket.contactId}</div>
           </div>
         </div>
@@ -115,14 +117,14 @@ export default function TicketDetails() {
       {/* Work Details */}
       {ticket.workDetails && (
         <div className='card ticket-info-card'>
-          <h3 className='ticket-section-title'>Work Details</h3>
+          <h3 className='ticket-section-title'>{t('ticketDetails.workDetails')}</h3>
           <div className='ticket-info-grid'>
             <div className='ticket-info-item'>
-              <span className='caption-text'>Tyre Type:</span>
+              <span className='caption-text'>{t('ticketDetails.tyreType')}</span>
               <div className='text-field'>{ticket.workDetails.tyreType}</div>
             </div>
             <div className='ticket-info-item'>
-              <span className='caption-text'>Services:</span>
+              <span className='caption-text'>{t('ticketDetails.services')}</span>
               <div className='services-container'>
                 {ticket.workDetails.services?.map((service, index) => (
                   <span key={index} className='service-tag'>
@@ -133,19 +135,19 @@ export default function TicketDetails() {
             </div>
             {ticket.workDetails.patchType && (
               <div className='ticket-info-item'>
-                <span className='caption-text'>Patch Type:</span>
+                <span className='caption-text'>{t('ticketDetails.patchType')}</span>
                 <div className='text-field'>{ticket.workDetails.patchType}</div>
               </div>
             )}
             {ticket.workDetails.patchNumber && (
               <div className='ticket-info-item'>
-                <span className='caption-text'>Patch Number:</span>
+                <span className='caption-text'>{t('ticketDetails.patchNumber')}</span>
                 <div className='text-field'>{ticket.workDetails.patchNumber}</div>
               </div>
             )}
             {ticket.workDetails.otherServices && (
               <div className='ticket-info-item'>
-                <span className='caption-text'>Other Services:</span>
+                <span className='caption-text'>{t('ticketDetails.otherServices')}</span>
                 <div className='text-field'>{ticket.workDetails.otherServices}</div>
               </div>
             )}
@@ -155,19 +157,19 @@ export default function TicketDetails() {
 
       {/* Dates */}
       <div className='card ticket-info-card'>
-        <h3 className='ticket-section-title'>Timeline</h3>
+        <h3 className='ticket-section-title'>{t('ticketDetails.timeline')}</h3>
         <div className='ticket-info-grid'>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Created:</span>
+            <span className='caption-text'>{t('ticketDetails.created')}</span>
             <div className='text-field'>{new Date(ticket.createdAt).toLocaleString()}</div>
           </div>
           <div className='ticket-info-item'>
-            <span className='caption-text'>Updated:</span>
+            <span className='caption-text'>{t('ticketDetails.updated')}</span>
             <div className='text-field'>{new Date(ticket.updatedAt).toLocaleString()}</div>
           </div>
           {ticket.dueDate && (
             <div className='ticket-info-item'>
-              <span className='caption-text'>Due Date:</span>
+              <span className='caption-text'>{t('ticketDetails.dueDate')}</span>
               <div className='text-field'>{new Date(ticket.dueDate).toLocaleString()}</div>
             </div>
           )}
@@ -177,10 +179,10 @@ export default function TicketDetails() {
       {/* Photos */}
       {(ticket.preRepairPhotos?.length > 0 || ticket.postRepairPhotos?.length > 0) && (
         <div className='card ticket-info-card'>
-          <h3 className='ticket-section-title'>Photos</h3>
+          <h3 className='ticket-section-title'>{t('ticketDetails.photos')}</h3>
           {ticket.preRepairPhotos?.length > 0 && (
             <div className='photo-section'>
-              <span className='caption-text'>Pre-Repair Photos:</span>
+              <span className='caption-text'>{t('ticketDetails.preRepairPhotos')}</span>
               <div className='photos-container'>
                 {ticket.preRepairPhotos.map((photo, index) => (
                   <div key={index} className='photo-placeholder'>
@@ -192,7 +194,7 @@ export default function TicketDetails() {
           )}
           {ticket.postRepairPhotos?.length > 0 && (
             <div className='photo-section'>
-              <span className='caption-text'>Post-Repair Photos:</span>
+              <span className='caption-text'>{t('ticketDetails.postRepairPhotos')}</span>
               <div className='photos-container'>
                 {ticket.postRepairPhotos.map((photo, index) => (
                   <div key={index} className='photo-placeholder'>
@@ -213,14 +215,14 @@ export default function TicketDetails() {
               className='btn-primary action-btn' 
               onClick={() => navigate(`/jobs/${ticket._id}/start`)}
             >
-              Start Job
+              {t('ticketDetails.startJob')}
             </button>
           )}
           <button 
             className='btn-secondary action-btn' 
             onClick={() => navigate('/')}
           >
-            Back to Home
+            {t('ticketDetails.backToHome')}
           </button>
         </div>
       </div>
