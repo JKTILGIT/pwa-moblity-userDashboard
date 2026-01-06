@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
 
 export default function Profile() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [profileImage, setProfileImage] = useState(null)
   const [profileData, setProfileData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -84,7 +86,7 @@ export default function Profile() {
       <div className='container'>
         <div className='card' style={{ padding: 20, textAlign: 'center' }}>
           <div className='loading-spinner' style={{ margin: '0 auto 16px' }}></div>
-          <p className='caption-text'>Loading profile...</p>
+          <p className='caption-text'>{t('profile.loadingProfile')}</p>
         </div>
       </div>
     )
@@ -97,7 +99,7 @@ export default function Profile() {
         <div className='card' style={{ padding: 20, textAlign: 'center' }}>
           <p className='caption-text' style={{ color: '#dc2626' }}>{error}</p>
           <button className='btn' onClick={() => window.location.reload()} style={{ marginTop: 16 }}>
-            Retry
+            {t('common.retry')}
           </button>
         </div>
       </div>
@@ -109,7 +111,7 @@ export default function Profile() {
     return (
       <div className='container'>
         <div className='card' style={{ padding: 20, textAlign: 'center' }}>
-          <p className='caption-text'>No profile data available</p>
+          <p className='caption-text'>{t('profile.noProfileData')}</p>
         </div>
       </div>
     )
@@ -122,7 +124,7 @@ export default function Profile() {
     <div className='container'>
       {/* Profile Header */}
       <div className='card' style={{ padding: 20, marginBottom: 16 }}>
-        <h2 className='bold-text' style={{ fontSize: '24px', marginBottom: 20 }}>My Profile</h2>
+        <h2 className='bold-text' style={{ fontSize: '24px', marginBottom: 20 }}>{t('profile.myProfile')}</h2>
 
         <div className='row' style={{ alignItems: 'flex-start', gap: 16 }}>
           {/* Profile Picture */}
@@ -165,29 +167,29 @@ export default function Profile() {
 
           {/* User Details */}
           <div className='stack' style={{ flex: 1, gap: 4 }}>
-            <div className='caption-text'>User ID: {profileData._id}</div>
+            <div className='caption-text'>{t('profile.userId')} {profileData._id}</div>
             <div className='bold-text' style={{ color: 'var(--brand)', fontSize: '18px' }}>{profileData.shopName}</div>
-            <div className='text-field'>Owner Name: {profileData.fullName}</div>
-            <div className='text-field'>Mobile No.: +91 {profileData.mobile}</div>
+            <div className='text-field'>{t('profile.ownerName')} {profileData.fullName}</div>
+            <div className='text-field'>{t('profile.mobileNo')} +91 {profileData.mobile}</div>
           </div>
         </div>
       </div>
 
       {/* Shop Details */}
       <div className='card' style={{ padding: 16, marginBottom: 16 }}>
-        <h3 className='bold-text' style={{ fontSize: '18px', marginBottom: 16 }}>Shop Details</h3>
+        <h3 className='bold-text' style={{ fontSize: '18px', marginBottom: 16 }}>{t('profile.shopDetails')}</h3>
 
         <div className='stack' style={{ gap: 12 }}>
           <div>
-            <div className='text-field' style={{ marginBottom: 4 }}>Address:</div>
+            <div className='text-field' style={{ marginBottom: 4 }}>{t('profile.address')}</div>
             <div className='caption-text'>{profileData.address}</div>
           </div>
 
           <div>
-            <div className='text-field' style={{ marginBottom: 4 }}>Availability:</div>
+            <div className='text-field' style={{ marginBottom: 4 }}>{t('profile.availability')}</div>
             <div className='stack' style={{ gap: 4 }}>
-              <div className='caption-text'>Days: {profileData.businessDays.join(', ')}</div>
-              <div className='caption-text'>Time: {profileData.timeFrom} - {profileData.timeTo}</div>
+              <div className='caption-text'>{t('profile.days')} {profileData.businessDays.join(', ')}</div>
+              <div className='caption-text'>{t('profile.time')} {profileData.timeFrom} - {profileData.timeTo}</div>
             </div>
           </div>
         </div>
@@ -195,21 +197,21 @@ export default function Profile() {
 
       {/* Documents */}
       <div className='card' style={{ padding: 16, marginBottom: 16 }}>
-        <h3 className='bold-text' style={{ fontSize: '18px', marginBottom: 16 }}>Documents</h3>
+        <h3 className='bold-text' style={{ fontSize: '18px', marginBottom: 16 }}>{t('profile.documents')}</h3>
 
         <div className='stack' style={{ gap: 12 }}>
           <div className='row' style={{ justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div className='text-field' style={{ marginBottom: 4 }}>KYC Status:</div>
+              <div className='text-field' style={{ marginBottom: 4 }}>{t('profile.kycStatus')}</div>
               <div style={{ color: '#10b981', fontWeight: '600', fontSize: '14px' }}>
-                {profileData.kycImage ? 'Completed' : 'Pending'}
+                {profileData.kycImage ? t('profile.completed') : t('profile.pending')}
               </div>
             </div>
           </div>
 
           {profileData.adharCard && (
             <div className='row' style={{ justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-              <div className='text-field'>Aadhar Card</div>
+              <div className='text-field'>{t('profile.adharCard')}</div>
               <button
                 style={{ background: 'none', border: 'none', color: 'var(--brand)', cursor: 'pointer' }}
                 onClick={() => window.open(`${API_BASE}/${profileData.adharCard}`, '_blank')}
@@ -221,7 +223,7 @@ export default function Profile() {
 
           {profileData.loiForm && (
             <div className='row' style={{ justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-              <div className='text-field'>LOI Form</div>
+              <div className='text-field'>{t('profile.loiForm')}</div>
               <button
                 style={{ background: 'none', border: 'none', color: 'var(--brand)', cursor: 'pointer' }}
                 onClick={() => window.open(`${API_BASE}/${profileData.loiForm}`, '_blank')}
@@ -233,7 +235,7 @@ export default function Profile() {
 
           {profileData.qrCode && (
             <div className='row' style={{ justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-              <div className='text-field'>QR Code</div>
+              <div className='text-field'>{t('profile.qrCode')}</div>
               <button
                 style={{ background: 'none', border: 'none', color: 'var(--brand)', cursor: 'pointer' }}
                 onClick={() => window.open(`${API_BASE}/${profileData.qrCode}`, '_blank')}
@@ -247,11 +249,11 @@ export default function Profile() {
 
       {/* Payment Info */}
       <div className='card' style={{ padding: 16, marginBottom: 16 }}>
-        <h3 className='bold-text' style={{ fontSize: '18px', marginBottom: 16 }}>Payment Info</h3>
+        <h3 className='bold-text' style={{ fontSize: '18px', marginBottom: 16 }}>{t('profile.paymentInfo')}</h3>
 
         <div className='row' style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div className='text-field' style={{ marginBottom: 4 }}>UPI ID:</div>
+            <div className='text-field' style={{ marginBottom: 4 }}>{t('profile.upiId')}</div>
             <div className='caption-text'>{profileData.upi}</div>
           </div>
           <button style={{ background: 'none', border: 'none', color: 'var(--brand)', cursor: 'pointer' }}>
@@ -262,14 +264,14 @@ export default function Profile() {
 
       {/* Password */}
       <div className='card' style={{ padding: 16, marginBottom: 16 }}>
-        <h3 className='bold-text' style={{ fontSize: '18px', marginBottom: 16 }}>Password</h3>
+        <h3 className='bold-text' style={{ fontSize: '18px', marginBottom: 16 }}>{t('profile.password')}</h3>
 
         <div
           className='row'
           style={{ justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
           onClick={() => navigate('/change-pin')}
         >
-          <div className='text-field'>Change PIN</div>
+          <div className='text-field'>{t('profile.changePin')}</div>
           <span style={{ color: 'var(--brand)', fontSize: '18px' }}>→</span>
         </div>
       </div>

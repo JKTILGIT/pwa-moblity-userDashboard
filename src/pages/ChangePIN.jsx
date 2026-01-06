@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { changePin } from '../api/auth'
 import { toast } from 'react-hot-toast'
 
 export default function ChangePIN() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [currentPin, setCurrentPin] = useState('')
   const [newPin, setNewPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
@@ -20,16 +22,16 @@ export default function ChangePIN() {
 
   const handleChangePin = async () => {
     // Validation
-    if (!currentPin) return toast.error('Please enter current PIN')
-    if (!newPin) return toast.error('Please enter new PIN')
-    if (!confirmPin) return toast.error('Please confirm new PIN')
+    if (!currentPin) return toast.error(t('changePin.pleaseEnterCurrentPin'))
+    if (!newPin) return toast.error(t('changePin.pleaseEnterNewPin'))
+    if (!confirmPin) return toast.error(t('changePin.pleaseConfirmPin'))
     
-    if (!validatePin(currentPin)) return toast.error('Current PIN must be 4-6 digits')
-    if (!validatePin(newPin)) return toast.error('New PIN must be 4-6 digits')
-    if (!validatePin(confirmPin)) return toast.error('Confirm PIN must be 4-6 digits')
+    if (!validatePin(currentPin)) return toast.error(t('changePin.currentPinMustBeDigits'))
+    if (!validatePin(newPin)) return toast.error(t('changePin.newPinMustBeDigits'))
+    if (!validatePin(confirmPin)) return toast.error(t('changePin.confirmPinMustBeDigits'))
     
-    if (newPin !== confirmPin) return toast.error('New PIN and confirm PIN do not match')
-    if (currentPin === newPin) return toast.error('New PIN must be different from current PIN')
+    if (newPin !== confirmPin) return toast.error(t('changePin.pinsDoNotMatch'))
+    if (currentPin === newPin) return toast.error(t('changePin.newPinMustBeDifferent'))
 
     try {
       setLoading(true)
@@ -64,24 +66,24 @@ export default function ChangePIN() {
       
       // Check if the API call was successful
       if (response.ok && data.success) {
-        toast.success(data.message || 'PIN changed successfully')
+        toast.success(data.message || t('changePin.pinChangedSuccessfully'))
         navigate('/profile')
       } else if (response.status === 401) {
         // Unauthorized - token might be invalid
         localStorage.removeItem('access_token')
         localStorage.removeItem('user')
-        toast.error('Session expired. Please login again.')
+        toast.error(t('changePin.sessionExpired'))
         navigate('/login')
       } else if (response.status === 403) {
         // Forbidden - insufficient permissions
-        throw new Error('You do not have permission to change PIN')
+        throw new Error(t('changePin.noPermission'))
       } else {
-        throw new Error(data.message || `Failed to change PIN (Status: ${response.status})`)
+        throw new Error(data.message || t('changePin.failedToChangePin'))
       }
 
     } catch (error) {
       console.error('Change PIN Error:', error)
-      const errorMessage = error?.message || 'Failed to change PIN'
+      const errorMessage = error?.message || t('changePin.failedToChangePin')
       toast.error(errorMessage)
     } finally {
       setLoading(false)
@@ -91,19 +93,19 @@ export default function ChangePIN() {
   return (
     <div className='container'>
       <div className='card' style={{padding: 20, marginBottom: 16}}>
-        <h2 className='bold-text' style={{fontSize: '24px', marginBottom: 20}}>Change PIN</h2>
+        <h2 className='bold-text' style={{fontSize: '24px', marginBottom: 20}}>{t('changePin.changePin')}</h2>
         <p className='caption-text' style={{marginBottom: 24}}>
-          Enter your current PIN and set a new PIN for your account
+          {t('changePin.enterCurrentAndNew')}
         </p>
 
         <div className='stack' style={{gap: 16}}>
           {/* Current PIN */}
           <div className='stack'>
-            <label className='text-field' style={{marginBottom: 8}}>Current PIN</label>
+            <label className='text-field' style={{marginBottom: 8}}>{t('changePin.currentPin')}</label>
             <input 
               type='password' 
               className='input' 
-              placeholder='Enter current PIN' 
+              placeholder={t('changePin.enterCurrentPin')} 
               value={currentPin} 
               onChange={e => setCurrentPin(e.target.value)}
               disabled={loading}
@@ -113,11 +115,11 @@ export default function ChangePIN() {
 
           {/* New PIN */}
           <div className='stack'>
-            <label className='text-field' style={{marginBottom: 8}}>New PIN</label>
+            <label className='text-field' style={{marginBottom: 8}}>{t('changePin.newPin')}</label>
             <input 
               type='password' 
               className='input' 
-              placeholder='Enter new PIN' 
+              placeholder={t('changePin.enterNewPin')} 
               value={newPin} 
               onChange={e => setNewPin(e.target.value)}
               disabled={loading}
@@ -127,11 +129,11 @@ export default function ChangePIN() {
 
           {/* Confirm PIN */}
           <div className='stack'>
-            <label className='text-field' style={{marginBottom: 8}}>Confirm New PIN</label>
+            <label className='text-field' style={{marginBottom: 8}}>{t('changePin.confirmNewPin')}</label>
             <input 
               type='password' 
               className='input' 
-              placeholder='Confirm new PIN' 
+              placeholder={t('changePin.confirmNewPinPlaceholder')} 
               value={confirmPin} 
               onChange={e => setConfirmPin(e.target.value)}
               disabled={loading}
@@ -147,12 +149,12 @@ export default function ChangePIN() {
             border: '1px solid #e5e7eb'
           }}>
             <p className='caption-text' style={{margin: 0, fontWeight: 600, marginBottom: 4}}>
-              PIN Requirements:
+              {t('changePin.pinRequirements')}
             </p>
             <ul style={{margin: 0, paddingLeft: 16, fontSize: '12px', color: '#6b7280'}}>
-              <li>Must be 4-6 digits</li>
-              <li>Cannot be the same as current PIN</li>
-              <li>Use numbers only</li>
+              <li>{t('changePin.mustBeDigits')}</li>
+              <li>{t('changePin.cannotBeSame')}</li>
+              <li>{t('changePin.useNumbersOnly')}</li>
             </ul>
           </div>
 
@@ -164,7 +166,7 @@ export default function ChangePIN() {
               disabled={loading}
               style={{flex: 1}}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button 
               className={`btn ${loading ? 'btn-loading' : ''}`}
@@ -172,7 +174,7 @@ export default function ChangePIN() {
               disabled={loading || !currentPin || !newPin || !confirmPin}
               style={{flex: 1}}
             >
-              {loading ? 'Changing PIN...' : 'Change PIN'}
+              {loading ? t('changePin.changingPin') : t('changePin.changePin')}
             </button>
           </div>
         </div>

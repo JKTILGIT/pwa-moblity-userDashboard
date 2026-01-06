@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import JobCard from '../components/JobCard'
 import RequestTilesInline from '../components/RequestTilesInline';
 import { useRequests } from '../store/RequestsProvider';
 
 export default function Home() {
+  const { t } = useTranslation()
   const [tickets, setTickets] = useState([]);
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,7 @@ export default function Home() {
       userId = stored ? JSON.parse(stored).id : "";
     } catch { }
     if (!userId) {
-      setError("No user ID found in local storage");
+      setError(t('errors.noUserIdFound'));
       setLoading(false);
       return;
     }
@@ -56,7 +58,7 @@ export default function Home() {
         setTickets(transformedTickets);
         setFilteredTickets(transformedTickets);
       } catch (err) {
-        setError(err.message || "Failed to fetch tickets");
+        setError(err.message || t('errors.failedToFetchTickets'));
       } finally {
         setLoading(false);
       }
@@ -87,13 +89,13 @@ export default function Home() {
     <div className='container'>
       <div className='row' style={{ gap: 8, marginBottom: 16 }}>
         <div className='card' style={{ flex: 1, padding: 12 }}>
-          <div className='caption-text'>Open Jobs</div>
+          <div className='caption-text'>{t('home.openJobs')}</div>
           <div className='bold-text' style={{ fontSize: '18px' }}>
             {tickets.filter(t => t.status && t.status.toLowerCase() !== 'completed').length}
           </div>
         </div>
         <div className='card' style={{ flex: 1, padding: 12 }}>
-          <div className='caption-text'>Completed Jobs</div>
+          <div className='caption-text'>{t('home.completedJobs')}</div>
           <div className='bold-text' style={{ fontSize: '18px' }}>
             {tickets.filter(t => t.status && t.status.toLowerCase() === 'completed').length}
           </div>
@@ -102,9 +104,9 @@ export default function Home() {
 
 
       <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between' }}>
-        <h3>Jobs</h3>
+        <h3>{t('home.jobs')}</h3>
         <div style={{ padding: '5px 10px', borderRadius: "100px", backgroundColor: `${showRequests ? '#FB8C00' : '#000'}`, color: 'white' }}>
-          <p onClick={() => setShowRequests(v => !v)} style={{ margin: '0px', fontSize: '13px' }}>Requests {items.length}</p>
+          <p onClick={() => setShowRequests(v => !v)} style={{ margin: '0px', fontSize: '13px' }}>{t('home.requests')} {items.length}</p>
         </div>
       </div>
 
@@ -149,7 +151,7 @@ export default function Home() {
           </div> */}
 
           <div className='list'>
-            {loading && <div className='caption-text'>Loading...</div>}
+            {loading && <div className='caption-text'>{t('common.loading')}</div>}
             {error && <div style={{ color: 'red' }} className='text-field'>{error}</div>}
             {!loading && !error && filteredTickets.map(t => (
               <JobCard
@@ -172,7 +174,7 @@ export default function Home() {
                 showCategory={true}
               />
             ))}
-            {!loading && !error && filteredTickets.length === 0 && <div className='caption-text'>No tickets found.</div>}
+            {!loading && !error && filteredTickets.length === 0 && <div className='caption-text'>{t('home.noTicketsFound')}</div>}
           </div>
         </>
       )}

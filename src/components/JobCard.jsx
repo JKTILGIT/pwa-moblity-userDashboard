@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { MdArrowForwardIos } from "react-icons/md";
 import axios from 'axios';
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -8,6 +9,7 @@ const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function JobCard({ job, showPriority = false, showCategory = false, fullTicket = null }) {
   const nav = useNavigate()
+  const { t } = useTranslation()
 
   // Debug: Log job data to see what we're getting
   // console.log('JobCard job data:', job)
@@ -60,7 +62,7 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
       })
     } else if (ticketDateOnly.getTime() === yesterdayOnly.getTime()) {
       // Yesterday
-      return 'Yesterday'
+      return t('jobCard.yesterday')
     } else {
       // Other days - show day of week
       return ticketDate.toLocaleDateString('en-US', {
@@ -154,10 +156,12 @@ export default function JobCard({ job, showPriority = false, showCategory = fals
     >
       <div className='job-card-content'>
         <div className='job-card-header'>
-          <div className='ticket-id'>Ticket ID: #{job.vehicle}</div>
+          <div className='ticket-id'>{t('jobCard.ticketId')}: #{job.vehicle}</div>
           <div className='job-time'>
             {/* {formatTime(job.createdAt || job.originalTicket?.createdAt) || job.time || 'N/A'} */}
-            {fullTicket?.status}
+            {fullTicket?.status === 'Ticket Created' ? t('status.ticketCreated') : 
+             fullTicket?.status === 'In progress' ? t('status.inProgress') : 
+             fullTicket?.status}
           </div>
         </div>
 

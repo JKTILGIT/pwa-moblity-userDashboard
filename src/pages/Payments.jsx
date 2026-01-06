@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 export default function Payments(){
   const nav = useNavigate()
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('pending')
   const [selectedPayment, setSelectedPayment] = useState(null)
 
@@ -101,7 +103,7 @@ export default function Payments(){
           <div className='row' style={{alignItems:'center', marginBottom:20, justifyContent: 'space-between'}}>
             <div className='row' style={{alignItems:'center', gap: 12}}>
               <button onClick={() => setSelectedPayment(null)} className='btn' style={{background:'#f3f4f6', color:'#111', padding:'8px 12px', width: 'auto', maxWidth: 'none', height: 'auto'}}>←</button>
-              <h3 className='bold-text' style={{margin:0, fontSize: '18px'}}>Bill Preview</h3>
+              <h3 className='bold-text' style={{margin:0, fontSize: '18px'}}>{t('payments.billPreview')}</h3>
             </div>
             <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
               <button style={{background: 'none', border: 'none', color: 'var(--brand)', cursor: 'pointer'}}>
@@ -116,7 +118,7 @@ export default function Payments(){
                 background: selectedPayment.status === 'completed' ? '#10b981' : '#6b7280',
                 color: 'white'
               }}>
-                {selectedPayment.status === 'completed' ? 'Paid' : 'Pending'}
+                {selectedPayment.status === 'completed' ? t('payments.paid') : t('payments.pending')}
               </div>
             </div>
           </div>
@@ -131,23 +133,23 @@ export default function Payments(){
             <div style={{background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e5e7eb'}}>
               <div className='stack' style={{gap: 8}}>
                 <div className='row' style={{justifyContent: 'space-between'}}>
-                  <span className='text-field'>Date of Breakdown:</span>
+                  <span className='text-field'>{t('payments.dateOfBreakdown')}</span>
                   <span className='text-field'>{selectedPayment.date}</span>
                 </div>
                 <div className='row' style={{justifyContent: 'space-between'}}>
-                  <span className='text-field'>Customer Mob no:</span>
+                  <span className='text-field'>{t('payments.customerMobNo')}</span>
                   <span className='text-field'>{selectedPayment.customerMobile}</span>
                 </div>
                 <div className='row' style={{justifyContent: 'space-between'}}>
-                  <span className='text-field'>Fleet Name:</span>
+                  <span className='text-field'>{t('payments.fleetName')}</span>
                   <span className='text-field'>{selectedPayment.fleetName}</span>
                 </div>
                 <div className='row' style={{justifyContent: 'space-between'}}>
-                  <span className='text-field'>Stencil No:</span>
+                  <span className='text-field'>{t('payments.stencilNo')}</span>
                   <span className='text-field'>{selectedPayment.stencilNo}</span>
                 </div>
                 <div className='row' style={{justifyContent: 'space-between'}}>
-                  <span className='text-field'>Tyre Type:</span>
+                  <span className='text-field'>{t('payments.tyreType')}</span>
                   <span className='text-field'>{selectedPayment.tyreType}</span>
                 </div>
               </div>
@@ -156,7 +158,7 @@ export default function Payments(){
 
           {/* Performed Services */}
           <div style={{marginBottom: 24}}>
-            <h3 className='bold-text' style={{fontSize: '20px', marginBottom: 16}}>Performed Services</h3>
+            <h3 className='bold-text' style={{fontSize: '20px', marginBottom: 16}}>{t('payments.performedServices')}</h3>
             
             <div style={{background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #e5e7eb'}}>
               <div className='stack' style={{gap: 12}}>
@@ -168,7 +170,7 @@ export default function Payments(){
                 ))}
                 <hr style={{border: 'none', borderTop: '1px solid #e5e7eb', margin: '8px 0'}} />
                 <div className='row' style={{justifyContent: 'space-between'}}>
-                  <span className='bold-text' style={{color: 'var(--brand)', fontSize: '16px'}}>Total Repair Cost:</span>
+                  <span className='bold-text' style={{color: 'var(--brand)', fontSize: '16px'}}>{t('payments.totalRepairCost')}</span>
                   <span className='bold-text' style={{color: 'var(--brand)', fontSize: '16px'}}>{selectedPayment.totalCost}</span>
                 </div>
               </div>
@@ -183,7 +185,7 @@ export default function Payments(){
                 console.log('Processing payment for:', selectedPayment.id)
                 alert('Payment processing functionality will be implemented with API integration')
               }}>
-                Process Payment
+                {t('payments.processPayment')}
               </button>
             </div>
           )}
@@ -196,7 +198,7 @@ export default function Payments(){
   return (
     <div className='container'>
       <div className='card' style={{padding: 20}}>
-        <h2 className='bold-text' style={{fontSize: '24px', marginBottom: 20}}>Payments</h2>
+        <h2 className='bold-text' style={{fontSize: '24px', marginBottom: 20}}>{t('payments.payments')}</h2>
         
         {/* Tabs */}
         <div className='row' style={{gap: 8, marginBottom: 20}}>
@@ -211,7 +213,7 @@ export default function Payments(){
             }}
             onClick={() => setActiveTab('pending')}
           >
-            Pending
+            {t('payments.pending')}
           </button>
           <button 
             className={`btn ${activeTab === 'completed' ? '' : 'btn-outline'}`}
@@ -224,7 +226,7 @@ export default function Payments(){
             }}
             onClick={() => setActiveTab('completed')}
           >
-            Completed
+            {t('payments.completed')}
           </button>
         </div>
 
@@ -243,8 +245,8 @@ export default function Payments(){
             >
               <div className='row' style={{justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8}}>
                 <div className='stack' style={{gap: 4}}>
-                  <div className='text-field'>Ticket ID: #{payment.ticketId}</div>
-                  <div className='caption-text'>Time: {payment.time}</div>
+                  <div className='text-field'>{t('payments.ticketId')} #{payment.ticketId}</div>
+                  <div className='caption-text'>{t('payments.time')} {payment.time}</div>
                 </div>
                 <div className='stack' style={{gap: 4, alignItems: 'flex-end'}}>
                   <div className='text-field'>{payment.amount}</div>
@@ -261,7 +263,7 @@ export default function Payments(){
                 marginTop: 8
               }}>
                 <div className='text-field' style={{color: 'white', margin: 0, textAlign: 'center'}}>
-                  Total Repair Cost: {payment.totalCost}
+                  {t('payments.totalRepairCost')} {payment.totalCost}
                 </div>
               </div>
             </div>
@@ -269,7 +271,7 @@ export default function Payments(){
           
           {currentPayments.length === 0 && (
             <div style={{textAlign: 'center', padding: '40px 20px'}}>
-              <div className='caption-text'>No {activeTab} payments found</div>
+              <div className='caption-text'>{activeTab === 'pending' ? t('payments.noPendingPayments') : t('payments.noCompletedPayments')}</div>
             </div>
           )}
         </div>

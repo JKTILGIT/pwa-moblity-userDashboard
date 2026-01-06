@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import JobCard from '../components/JobCard'
 
 export default function Jobs() {
+  const { t } = useTranslation()
   const [tab, setTab] = useState('open')
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,7 +21,7 @@ export default function Jobs() {
       userId = stored ? JSON.parse(stored).id : "";
     } catch { }
     if (!userId) {
-      setError("No user ID found in local storage");
+      setError(t('errors.noUserIdFound'));
       setLoading(false);
       return;
     }
@@ -49,7 +51,7 @@ export default function Jobs() {
         setTickets(transformedTickets);
         setFilteredTickets(transformedTickets);
       } catch (err) {
-        setError(err.message || "Failed to fetch tickets");
+        setError(err.message || t('errors.failedToFetchTickets'));
       } finally {
         setLoading(false);
       }
@@ -75,16 +77,16 @@ export default function Jobs() {
       <div className='row' style={{ justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div className='row' style={{ gap: 8 }}>
           <button className='btn' style={{ background: tab === 'open' ? 'var(--brand)' : '#e5e7eb', color: tab === 'open' ? '#fff' : '#111', width: 'auto', maxWidth: 'none' }} onClick={() => setTab('open')}>
-            Open Jobs ({openTickets.length})
+            {t('jobs.openJobs')} ({openTickets.length})
           </button>
           <button className='btn' style={{ background: tab === 'closed' ? 'var(--brand)' : '#e5e7eb', color: tab === 'closed' ? '#fff' : '#111', width: 'auto', maxWidth: 'none' }} onClick={() => setTab('closed')}>
-            Closed Jobs ({closedTickets.length})
+            {t('jobs.closedJobs')} ({closedTickets.length})
           </button>
         </div>
         <div className='search' style={{ flex: 1, minWidth: 200 }}>
           <input
             className='input'
-            placeholder='Search by Ticket ID, Subject, Phone'
+            placeholder={t('jobs.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -94,7 +96,7 @@ export default function Jobs() {
       {/* Loading State */}
       {loading && (
         <div className='card' style={{ padding: 20, textAlign: 'center' }}>
-          <div className='caption-text'>Loading tickets...</div>
+          <div className='caption-text'>{t('jobs.loadingTickets')}</div>
         </div>
       )}
 
@@ -107,7 +109,7 @@ export default function Jobs() {
 
       {/* Tickets List */}
       <div className='list'>
-        {loading && <div className='caption-text'>Loading...</div>}
+        {loading && <div className='caption-text'>{t('common.loading')}</div>}
         {error && <div style={{ color: 'red' }} className='text-field'>{error}</div>}
         {!loading && !error && filteredTickets.map(t => (
           <JobCard
@@ -130,7 +132,7 @@ export default function Jobs() {
             showCategory={true}
           />
         ))}
-        {!loading && !error && filteredTickets.length === 0 && <div className='caption-text'>No tickets found.</div>}
+        {!loading && !error && filteredTickets.length === 0 && <div className='caption-text'>{t('jobs.noTicketsFound')}</div>}
       </div>
 
 
