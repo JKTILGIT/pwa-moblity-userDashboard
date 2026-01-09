@@ -26,7 +26,28 @@ export default function JobChatPage({ mechanicIdProp }) {
   const driverPhone = context.driverPhone || '';
   const mechanicId = mechanicIdProp || (JSON.parse(localStorage.getItem('user'))?.id);
 
-  // Create BOT_FLOW with translations
+  // Issue mapping: English (for backend) -> Display text (translated)
+  const ISSUE_MAPPING = {
+    'Tyre Burst': t('chatbot.issues.tyreBurst'),
+    'Tyre Puncture': t('chatbot.issues.tyrePuncture'),
+    'Rim Break/ Damage': t('chatbot.issues.rimBreakDamage'),
+    'Air Bulge': t('chatbot.issues.airBulge'),
+    'Tyre Runflat': t('chatbot.issues.tyreRunflat'),
+    'Cuts/ Cracks/ Damage in Sidewalls': t('chatbot.issues.cutsCracksDamage'),
+    'Belt/ Tread Separation': t('chatbot.issues.beltTreadSeparation')
+  };
+
+  // Reverse mapping: Display text -> English (for backend)
+  const ISSUE_REVERSE_MAPPING = Object.fromEntries(
+    Object.entries(ISSUE_MAPPING).map(([en, translated]) => [translated, en])
+  );
+
+  // Helper function to get English issue name from translated text
+  const getEnglishIssueName = (translatedText) => {
+    return ISSUE_REVERSE_MAPPING[translatedText] || translatedText;
+  };
+
+  // Create BOT_FLOW with translations (display translated, but we'll map back to English when submitting)
   const BOT_FLOW = [
     { id: 'greeting', type: 'info' },
     { id: 'vehicle_plate', type: 'capture_image', title: t('chatbot.uploadNumberPlate') },
@@ -360,8 +381,20 @@ export default function JobChatPage({ mechanicIdProp }) {
       return;
     }
     setSubmitting(true);
-    handleIssueMapping(selectedIssues[0])
-    await postMessage({ who: "mechanic", text: selectedIssues.join(", "), meta: { type: "issues", issues: selectedIssues } });
+    
+    // Convert translated issue names to English for backend
+    const englishIssues = selectedIssues.map(issue => getEnglishIssueName(issue));
+    const firstEnglishIssue = englishIssues[0];
+    
+    // Use English issue name for backend API
+    handleIssueMapping(firstEnglishIssue);
+    
+    // Send English issue names to backend, but display translated text in chat
+    await postMessage({ 
+      who: "mechanic", 
+      text: selectedIssues.join(", "), // Display translated text in chat
+      meta: { type: "issues", issues: englishIssues } // Send English to backend
+    });
     setSubmitting(false);
   }
 
@@ -594,6 +627,17 @@ export default function JobChatPage({ mechanicIdProp }) {
       }
     }
     
+    // Vehicle verified (handles "The vehicle UP78AX3921 is verified.")
+    if (lowerText.includes('vehicle') && lowerText.includes('verified')) {
+      // Try multiple patterns to extract vehicle number
+      const vehicleMatch = text.match(/vehicle\s+([A-Z]{2}\d{1,2}[A-Z]{1,3}\d{1,4})/i) || 
+                          text.match(/The vehicle\s+([A-Z]{2}\d{1,2}[A-Z]{1,3}\d{1,4})/i) ||
+                          text.match(/([A-Z]{2}\d{1,2}[A-Z]{1,3}\d{1,4})/);
+      if (vehicleMatch) {
+        return t('chatbot.vehicleVerified', { vehicleNumber: vehicleMatch[1] });
+      }
+    }
+    
     // Vehicle not matched
     if (lowerText.includes('vehicle') && (lowerText.includes('not match') || lowerText.includes('did not match'))) {
       const vehicleMatch = text.match(/Vehicle\s+([^\s]+)/i) || text.match(/([A-Z]{2}\d{1,2}[A-Z]{1,3}\d{1,4})/);
@@ -606,12 +650,32 @@ export default function JobChatPage({ mechanicIdProp }) {
       }
     }
     
+    // Vehicle not verified (error)
+    if (lowerText.includes('vehicle') && (lowerText.includes('not verified') || lowerText.includes('could not be verified') || 
+        lowerText.includes('verification failed') || lowerText.includes('failed to verify'))) {
+      return t('chatbot.vehicleNotVerified');
+    }
+    
     // Stencil found
     if (lowerText.includes('stencil') && (lowerText.includes('found') || lowerText.includes('detected'))) {
       const stencilMatch = text.match(/Stencil number\s+([^\s]+)/i) || text.match(/stencil[:\s]+([^\s]+)/i);
       if (stencilMatch) {
         return t('chatbot.stencilFound', { stencilNumber: stencilMatch[1] });
       }
+    }
+    
+    // Stencil verified
+    if (lowerText.includes('stencil') && lowerText.includes('verified')) {
+      const stencilMatch = text.match(/stencil number\s+([^\s]+)/i) || text.match(/stencil[:\s]+([^\s]+)/i);
+      if (stencilMatch) {
+        return t('chatbot.stencilVerified', { stencilNumber: stencilMatch[1] });
+      }
+    }
+    
+    // Stencil not verified (error)
+    if (lowerText.includes('stencil') && (lowerText.includes('not verified') || lowerText.includes('could not be verified') || 
+        lowerText.includes('verification failed') || lowerText.includes('failed to verify'))) {
+      return t('chatbot.stencilNotVerified');
     }
     
     // Return original if no match found (backend message stays as is)
