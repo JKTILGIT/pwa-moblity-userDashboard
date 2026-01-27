@@ -164,7 +164,19 @@ export default function PitStopForm() {
       console.log('Submit response:', response.data);
 
       if (response.data.success) {
-        setSuccessMessage('Form submitted successfully!');
+        // Check if all three checkboxes are "Yes"
+        const allCheckboxesYes = 
+          formData.inflationCapability === true && 
+          formData.hydraulicJack === true && 
+          formData.repairKits === true;
+
+        if (allCheckboxesYes) {
+          // Navigate to detailed evaluation page
+          navigate(`/detailed-evaluation?pitstopId=${draftId}`);
+        } else {
+          // Show success modal (existing flow)
+          setSuccessMessage('Form submitted successfully!');
+        }
       }
     } catch (error) {
       console.error('Failed to submit form:', error.response?.data || error.message);

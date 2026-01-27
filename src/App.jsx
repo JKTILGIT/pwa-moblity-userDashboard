@@ -16,6 +16,7 @@ import { RequestsProvider } from './store/RequestsProvider'
 
 export default function App() {
   const [authed, setAuthed] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const user = JSON.parse(localStorage.getItem('user'));
@@ -26,7 +27,12 @@ export default function App() {
 
     console.log("user", user?.id)
     setAuthed(!!token)
+    setLoading(false)
   }, [])
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+  }
 
   return (
     <div className='mobile-shell'>

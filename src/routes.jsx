@@ -17,6 +17,8 @@ import JobChatPage from "./pages/JobChatPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import PitStopOnboarding from "./pages/PitStopOnboarding";
 import PitStopForm from "./pages/PitStopForm";
+import DetailedEvaluation from "./pages/DetailedEvaluation";
+import PitStopAdditionalDetails from "./pages/PitStopAdditionalDetails";
 import Manager from "./pages/Manager";
 import OperatorDashboard from "./pages/OperatorDashboard";
 
@@ -57,6 +59,8 @@ export default function AppRoutes({ authed }) {
           <Route path="/support" element={<SupportTickets />} />
           <Route path="/training" element={<Training />} />
           <Route path="/pitstop-form" element={<PitStopForm />} />
+          <Route path="/detailed-evaluation" element={<DetailedEvaluation />} />
+          <Route path="/pitstop-additional-details" element={<PitStopAdditionalDetails />} />
           <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/job-chat/:ticketId" element={<JobChatPage />} />
         </>
