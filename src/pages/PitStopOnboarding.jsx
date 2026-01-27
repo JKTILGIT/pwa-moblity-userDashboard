@@ -50,6 +50,24 @@ export default function PitStopOnboarding() {
     navigate('/pitstop-form');
   };
 
+  // Filter pitstops based on search query
+  const filterPitstops = (pitstops) => {
+    if (!searchQuery.trim()) return pitstops;
+
+    const query = searchQuery.toLowerCase();
+    return pitstops.filter((pitstop) => {
+      return (
+        pitstop.pitstopName?.toLowerCase().includes(query) ||
+        pitstop.ownerName?.toLowerCase().includes(query) ||
+        pitstop.contactNumber?.toLowerCase().includes(query) ||
+        pitstop.location?.toLowerCase().includes(query)
+      );
+    });
+  };
+
+  const filteredPendingPitstops = filterPitstops(pendingPitstops);
+  const filteredDraftPitstops = filterPitstops(draftPitstops);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -125,16 +143,16 @@ export default function PitStopOnboarding() {
 
         {!loading && activeTab === 'vehicle' && (
           <div>
-            {pendingPitstops.length === 0 ? (
+            {filteredPendingPitstops.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <div className="text-gray-400 text-6xl mb-4">📋</div>
                 <p className="text-gray-600 text-center">
-                  No pitstops waiting for approval
+                  {searchQuery ? 'No pitstops found matching your search' : 'No pitstops waiting for approval'}
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
-                {pendingPitstops.map((pitstop) => (
+                {filteredPendingPitstops.map((pitstop) => (
                   <div
                     key={pitstop._id}
                     className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
@@ -155,16 +173,16 @@ export default function PitStopOnboarding() {
 
         {!loading && activeTab === 'drafts' && (
           <div>
-            {draftPitstops.length === 0 ? (
+            {filteredDraftPitstops.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <div className="text-gray-400 text-6xl mb-4">📝</div>
                 <p className="text-gray-600 text-center">
-                  No draft submissions yet
+                  {searchQuery ? 'No drafts found matching your search' : 'No draft submissions yet'}
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
-                {draftPitstops.map((pitstop) => (
+                {filteredDraftPitstops.map((pitstop) => (
                   <div
                     key={pitstop._id}
                     onClick={() => navigate(`/pitstop-form?draftId=${pitstop._id}`)}

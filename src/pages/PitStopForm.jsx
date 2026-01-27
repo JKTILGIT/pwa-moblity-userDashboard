@@ -179,8 +179,7 @@ export default function PitStopForm() {
       <div className="bg-white border-b border-gray-200 px-4 py-6 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="text-xl hover:text-gray-900"
-          style={{ color: 'var(--brand)' }}
+          className="text-xl text-black hover:text-gray-900"
         >
           ←
         </button>
@@ -193,7 +192,8 @@ export default function PitStopForm() {
       <div className="px-4 py-6">
         {/* Step 1: Personal Details */}
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-6">Step 1: Personal Details</h2>
+          <div className="text-sm font-semibold text-gray-500 mb-4">Step 1: </div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-6">Personal Details</h2>
 
           {/* PitStop Name */}
           <div className="mb-5">
@@ -283,10 +283,11 @@ export default function PitStopForm() {
 
         {/* Step 2: Critical Must-Haves */}
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-6">Step 2: Critical Must-Haves</h2>
+          <div className="text-sm font-semibold text-gray-500 mb-4">Step 2:</div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-6">Critical Must-Haves</h2>
 
           {/* Item 1: Inflation Capability */}
-          <div className="mb-6 bg-white border border-gray-200 rounded-lg p-4">
+          <div className="mb-6  rounded-lg p-4">
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-800 flex-1">Inflation capability (compressor {'>'}= 120 PSI or equivalent)</span>
               <div className="flex gap-6">
@@ -313,7 +314,7 @@ export default function PitStopForm() {
           </div>
 
           {/* Item 2: Hydraulic Jack */}
-          <div className="mb-6 bg-white border border-gray-200 rounded-lg p-4">
+          <div className="mb-6  rounded-lg p-4">
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-800 flex-1">Hydraulic jack (suited for Trucks)</span>
               <div className="flex gap-6">
@@ -342,7 +343,7 @@ export default function PitStopForm() {
           </div>
 
           {/* Item 3: Repair Kits */}
-          <div className="mb-6 bg-white border border-gray-200 rounded-lg p-4">
+          <div className="mb-6 rounded-lg p-4">
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-800 flex-1">Repair kits: tube/tubeless/cut/radial patches</span>
               <div className="flex gap-6">
@@ -389,7 +390,7 @@ export default function PitStopForm() {
 
         {/* Success Message Modal */}
         {successMessage && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50 px-4">
+          <div className="fixed inset-0 bg-white/30 flex items-center justify-center z-50 px-4">
             <div className="bg-white rounded-2xl p-8 w-full max-w-sm text-center shadow-2xl">
               {/* Green checkmark icon with circle background */}
               <div className="flex justify-center mb-4">
