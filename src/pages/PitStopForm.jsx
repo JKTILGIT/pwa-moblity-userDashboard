@@ -1,15 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:9897/api/pitstops';
+const PROSPECT_API_URL = 'http://localhost:9897/api/prospect';
 
 export default function PitStopForm() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [draftId, setDraftId] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     pitstopName: '',
     ownerName: '',
@@ -19,91 +17,6 @@ export default function PitStopForm() {
     hydraulicJack: null,
     repairKits: null,
   });
-
-  // Load existing draft or create new one on component mount
-  useEffect(() => {
-    const existingDraftId = searchParams.get('draftId') || searchParams.get('pitstopId');
-    if (existingDraftId) {
-      loadExistingDraft(existingDraftId);
-    } else {
-      createNewDraft();
-    }
-  }, []);
-
-  const loadExistingDraft = async (id) => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API_BASE_URL}/details/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.data.success) {
-        const draft = response.data.pitstop;
-        setDraftId(draft._id);
-        setFormData({
-          pitstopName: draft.pitstopName || '',
-          ownerName: draft.ownerName || '',
-          contactNumber: draft.contactNumber || '',
-          location: draft.location || '',
-          inflationCapability: draft.inflationCapability,
-          hydraulicJack: draft.hydraulicJack,
-          repairKits: draft.repairKits,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load draft:', error.response?.data || error.message);
-    }
-  };
-
-  const createNewDraft = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.post(`${API_BASE_URL}/create-draft`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.data.success) {
-        setDraftId(response.data.pitstop._id);
-      }
-    } catch (error) {
-      console.error('Failed to create draft:', error.response?.data || error.message);
-    }
-  };
-
-  // Auto-save on field change (only for drafts, not submitted forms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (draftId && (formData.pitstopName || formData.ownerName || formData.contactNumber || formData.location)) {
-        saveDraft();
-      }
-    }, 1000); // Save after 1 second of inactivity
-
-    return () => clearTimeout(timer);
-  }, [formData, draftId]);
-
-  const saveDraft = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token || !draftId) {
-        return;
-      }
-      const response = await axios.post(`${API_BASE_URL}/save-draft`, {
-        pitstopId: draftId,
-        ...formData,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.data.success) {
-        console.log('Draft saved successfully');
-      }
-    } catch (error) {
-      // Silently ignore 404 errors (form already submitted)
-      if (error.response?.status !== 404) {
-        console.error('Failed to save draft:', error.response?.data || error.message);
-      }
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -120,15 +33,70 @@ export default function PitStopForm() {
     }));
   };
 
+  // const getLocationFromCoordinates = async () => {
+  //   return new Promise((resolve, reject) => {
+  //     if (!navigator.geolocation) {
+  //       reject('Geolocation not supported');
+  //       return;
+  //     }
+
+  //     navigator.geolocation.getCurrentPosition(
+  //       async (position) => {
+  //         const { latitude, longitude } = position.coords;
+          
+  //         try {
+  //           const GOOGLE_API_KEY = 'AIzaSyDagX1h0n0zsQtAZ9bCaD9zdmjWx_1cLoo';
+  //           const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`;
+            
+  //           const response = await fetch(geocodeUrl);
+  //           const data = await response.json();
+            
+  //           if (data.status === 'OK' && data.results.length > 0) {
+  //             const formattedAddress = data.results[0].formatted_address;
+  //             resolve(formattedAddress);
+  //           } else {
+  //             reject('Failed to get location');
+  //           }
+  //         } catch (error) {
+  //           reject(error);
+  //         }
+  //       },
+  //       (error) => reject(error)
+  //     );
+  //   });
+  // };
+
+  // const handleGetLocation = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const address = await getLocationFromCoordinates();
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       location: address,
+  //     }));
+  //   } catch (error) {
+  //     console.error('Failed to get location:', error);
+  //     alert('Failed to get location. Please enter manually.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const saveAsProspect = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      await axios.post(`${PROSPECT_API_URL}/create`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (error) {
+      console.error('Failed to save prospect:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      setSuccessMessage('');
-
-      if (!draftId) {
-        setLoading(false);
-        return;
-      }
 
       // Check if required fields are filled
       const hasRequiredFields = formData.pitstopName && formData.ownerName && 
@@ -140,21 +108,25 @@ export default function PitStopForm() {
         formData.hydraulicJack === true && 
         formData.repairKits === true;
 
-      // Save as draft first
-      await saveDraft();
-
-      // If required fields are missing OR checkboxes not all checked, just show success
+      // If required fields are missing OR checkboxes not all checked
       if (!hasRequiredFields || !allCheckboxesYes) {
-        setSuccessMessage('Form submitted successfully!');
+        // Save as prospect
+        await saveAsProspect();
+        // Show modal
+        setShowModal(true);
         setLoading(false);
         return;
       }
 
       // All required fields filled and all checkboxes Yes -> navigate to detailed evaluation
-      // Still keeping it as draft until detailed evaluation is complete
-      navigate(`/detailed-evaluation?pitstopId=${draftId}`);
+      navigate('/detailed-evaluation', { 
+        state: { 
+          onboardingData: formData 
+        } 
+      });
     } catch (error) {
       console.error('Failed to submit form:', error.response?.data || error.message);
+      alert('Failed to submit form. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -229,14 +201,24 @@ export default function PitStopForm() {
           {/* Location */}
           <div className="mb-5">
             <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              placeholder="Enter location"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                placeholder="Enter location"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+              />
+              {/* <button
+                type="button"
+                onClick={handleGetLocation}
+                disabled={loading}
+                className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                📍
+              </button> */}
+            </div>
           </div>
         </div>
 
@@ -347,27 +329,29 @@ export default function PitStopForm() {
           </button>
         </div>
 
-        {/* Success Message Modal */}
-        {successMessage && (
-          <div className="fixed inset-0 bg-white/30 flex items-center justify-center z-50 px-4">
-            <div className="bg-white rounded-2xl p-8 w-full max-w-sm text-center shadow-2xl">
-              {/* Green checkmark icon with circle background */}
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-sm text-center shadow-2xl animate-fadeIn">
+              {/* Info icon with purple circle background */}
               <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                  </svg>
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-purple-50 flex items-center justify-center relative">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center">
+                      <span className="text-white text-2xl font-bold">i</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Details saved successfully</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Details Saved for Review</h3>
               <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                We've securely saved the information you submitted. However, this action doesn't mean we've completed onboarding of this stage.
+                We've securely saved the information you submitted. However, this pitstop doesn't meet all the required criteria to complete onboarding at this stage.
               </p>
               
               <button
                 onClick={() => navigate('/')}
-                className="w-full py-3 rounded-lg text-white font-semibold text-base"
+                className="w-full py-3 rounded-lg text-white font-semibold text-base transition-all hover:opacity-90"
                 style={{
                   background: 'var(--brand)',
                 }}
@@ -377,16 +361,7 @@ export default function PitStopForm() {
             </div>
           </div>
         )}
-
-
       </div>
-
-      {/* Draft Status */}
-      {draftId && !successMessage && (
-        <div className="px-4 pb-4 text-center text-sm text-green-600">
-          ✓ Draft saved automatically
-        </div>
-      )}
     </div>
   );
 }
